@@ -19,6 +19,23 @@ interface Leave {
     user_name?: string;
 }
 
+const leaveBgColors: Record<string, string> = {
+    '연차': 'bg-blue-600 text-white shadow-blue-100',
+    '반차': 'bg-green-300 text-white shadow-green-100',
+    '대체휴무': 'bg-amber-300 text-white shadow-amber-100',
+    '공휴일': 'bg-red-200 text-red-700 shadow-red-100'
+};
+
+const dotColors: Record<string, string> = {
+    '연차': 'bg-blue-400',
+    '반차': 'bg-green-300',
+    '대체휴무': 'bg-amber-200',
+    '공휴일': 'bg-red-400'
+};
+
+const getLeaveBgColor = (type?: string) => leaveBgColors[type || ''] || 'bg-slate-100';
+const getDotColor = (type: string) => dotColors[type] || 'bg-slate-300';
+
 
 export default function MemberPage() {
     const { user, logout, loading } = useAuth();
@@ -44,8 +61,6 @@ export default function MemberPage() {
     // Independent view month/year for date pickers
     const [startViewYear, setStartViewYear] = useState(new Date().getFullYear());
     const [startViewMonthNum, setStartViewMonthNum] = useState(new Date().getMonth());
-    const [endViewYear, setEndViewYear] = useState(new Date().getFullYear());
-    const [endViewMonthNum, setEndViewMonthNum] = useState(new Date().getMonth());
 
     const fetchData = React.useCallback(async () => {
         try {
@@ -80,16 +95,41 @@ export default function MemberPage() {
         }
 
         try {
+            if (leaveType === '연차' && leaveSubtype === '기간' && !endDate) {
+                alert('종료일을 선택해주세요.');
+                return;
+            }
+
             await api.post('/leaves', {
                 leave_type: leaveType,
                 leave_subtype: leaveSubtype,
                 start_date: startDate,
-                end_date: endDate,
+                end_date: endDate || startDate,
             });
             setShowForm(false);
             fetchData();
         } catch {
             alert('휴무 등록에 실패했습니다.');
+        }
+    };
+
+    const handleFormDateClick = (dayStr: string) => {
+        const isRangeMode = leaveType === '연차' && leaveSubtype === '기간';
+        if (isRangeMode) {
+            if (!startDate || (startDate && endDate)) {
+                setStartDate(dayStr);
+                setEndDate('');
+            } else {
+                if (dayStr < startDate) {
+                    setStartDate(dayStr);
+                    setEndDate('');
+                } else {
+                    setEndDate(dayStr);
+                }
+            }
+        } else {
+            setStartDate(dayStr);
+            setEndDate(dayStr);
         }
     };
 
@@ -174,26 +214,6 @@ export default function MemberPage() {
                                 const isWeekday = day.getDay() !== 0 && day.getDay() !== 6;
                                 return isWeekday && dayStr >= startStr && dayStr <= endStr && l.user_id !== user?.id;
                             });
-
-                            const getLeaveBgColor = (type?: string) => {
-                                switch (type) {
-                                    case '연차': return 'bg-blue-600 text-white shadow-blue-100';
-                                    case '반차': return 'bg-green-300 text-white shadow-green-100';
-                                    case '대체휴무': return 'bg-amber-300 text-white shadow-amber-100';
-                                    case '공휴일': return 'bg-red-200 text-red-700 shadow-red-100';
-                                    default: return 'bg-slate-100';
-                                }
-                            };
-
-                            const getDotColor = (type: string) => {
-                                switch (type) {
-                                    case '연차': return 'bg-blue-400';
-                                    case '반차': return 'bg-green-300';
-                                    case '대체휴무': return 'bg-amber-200';
-                                    case '공휴일': return 'bg-red-400';
-                                    default: return 'bg-slate-300';
-                                }
-                            };
 
                             return (
                                 <div
@@ -382,7 +402,7 @@ export default function MemberPage() {
                         <form onSubmit={handleRegister} className="space-y-4">
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider ml-1">휴무 구분</label>
+                                    <label className="block text-[10px] font-black text-slate-900 mb-2 uppercase tracking-wider ml-1">휴무 구분</label>
                                     <div className="grid grid-cols-4 gap-2">
                                         {['연차', '반차', '대체휴무', '공휴일'].map((type) => (
                                             <button
@@ -394,7 +414,7 @@ export default function MemberPage() {
                                                     else if (type === '반차') setLeaveSubtype('오전');
                                                     else setLeaveSubtype('일반');
                                                 }}
-                                                className={`py-2.5 rounded-xl text-base font-black transition-all border-2 ${leaveType === type
+                                                className={`py-1.5 rounded-lg text-xs font-black transition-all border-2 ${leaveType === type
                                                     ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100'
                                                     : 'bg-white border-slate-100 text-slate-500 hover:border-blue-200'
                                                     }`}
@@ -406,7 +426,7 @@ export default function MemberPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider ml-1">상세 구분</label>
+                                    <label className="block text-[10px] font-black text-slate-900 mb-2 uppercase tracking-wider ml-1">상세 구분</label>
                                     <div className="grid grid-cols-2 gap-2">
                                         {(leaveType === '연차' ? ['종일', '기간'] :
                                             leaveType === '반차' ? ['오전', '오후'] : ['일반']).map((subtype) => (
@@ -414,7 +434,7 @@ export default function MemberPage() {
                                                     key={subtype}
                                                     type="button"
                                                     onClick={() => setLeaveSubtype(subtype)}
-                                                    className={`py-2.5 rounded-xl text-base font-black transition-all border-2 ${leaveSubtype === subtype
+                                                    className={`py-1.5 rounded-lg text-xs font-black transition-all border-2 ${leaveSubtype === subtype
                                                         ? 'bg-blue-50 border-blue-600 text-blue-600'
                                                         : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'
                                                         }`}
@@ -428,83 +448,33 @@ export default function MemberPage() {
 
                             {/* Custom Date Picker Integration */}
                             <div className="space-y-6">
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider ml-1">신청 일자 (시작)</label>
-                                    <div className="bg-slate-50 rounded-2xl p-2.5 border-2 border-slate-100">
-                                        {/* Year / Month selectors */}
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <select
-                                                value={startViewYear}
-                                                onChange={e => setStartViewYear(Number(e.target.value))}
-                                                className="flex-1 text-xs font-bold bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-slate-700 focus:outline-none focus:border-blue-400"
-                                            >
-                                                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 1 + i).map(y => (
-                                                    <option key={y} value={y}>{y}년</option>
-                                                ))}
-                                            </select>
-                                            <select
-                                                value={startViewMonthNum}
-                                                onChange={e => setStartViewMonthNum(Number(e.target.value))}
-                                                className="flex-1 text-xs font-bold bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-slate-700 focus:outline-none focus:border-blue-400"
-                                            >
-                                                {Array.from({ length: 12 }, (_, i) => i).map(m => (
-                                                    <option key={m} value={m}>{m + 1}월</option>
-                                                ))}
-                                            </select>
-                                            <span className="text-xs font-black text-blue-600 whitespace-nowrap">{startDate ? format(new Date(startDate), 'dd일') : '--'}</span>
+                                <div className="space-y-4">
+                                    <div>
+                                        <div className="flex justify-between items-end mb-2 px-1">
+                                            <label className="text-[10px] font-black text-slate-900 uppercase tracking-wider">신청 일자 선택</label>
+                                            <div className="text-right">
+                                                <p className="text-[10px] font-bold text-blue-600 mb-0.5">
+                                                    {leaveType === '연차' && leaveSubtype === '기간'
+                                                        ? (!startDate ? '시작일을 선택하세요' : !endDate ? '종료일을 선택하세요' : '범위가 선택되었습니다')
+                                                        : '날짜를 선택하세요'}
+                                                </p>
+                                                <div className="text-xs font-black text-slate-800 flex items-center gap-1">
+                                                    <span className={!startDate ? 'text-slate-300' : ''}>{startDate ? format(new Date(startDate), 'MM.dd') : '시작일'}</span>
+                                                    {leaveType === '연차' && leaveSubtype === '기간' && (
+                                                        <>
+                                                            <span className="text-slate-300">~</span>
+                                                            <span className={!endDate ? 'text-slate-300' : ''}>{endDate ? format(new Date(endDate), 'MM.dd') : '종료일'}</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                        {/* Day grid */}
-                                        <div className="grid grid-cols-7 gap-0.5 text-center mb-1">
-                                            {['일', '월', '화', '수', '목', '금', '토'].map((d, i) => (
-                                                <span key={d} className={`text-[10px] font-black ${i === 0 ? 'text-red-700' : i === 6 ? 'text-blue-700' : 'text-slate-700'}`}>{d}</span>
-                                            ))}
-                                        </div>
-                                        <div className="grid grid-cols-7 gap-0.5">
-                                            {Array.from({ length: new Date(startViewYear, startViewMonthNum, 1).getDay() }).map((_, i) => (
-                                                <div key={i} className="h-8" />
-                                            ))}
-                                            {eachDayOfInterval({
-                                                start: new Date(startViewYear, startViewMonthNum, 1),
-                                                end: new Date(startViewYear, startViewMonthNum + 1, 0)
-                                            }).map((day) => {
-                                                const dayStr = format(day, 'yyyy-MM-dd');
-                                                const isSelected = dayStr === startDate;
-                                                const dayOfWeek = day.getDay();
-                                                const isHoliday = isKoreanHoliday(dayStr);
-                                                const isDisabled = dayOfWeek === 0 || dayOfWeek === 6;
-                                                return (
-                                                    <button
-                                                        key={dayStr}
-                                                        type="button"
-                                                        disabled={isDisabled}
-                                                        onClick={() => {
-                                                            setStartDate(dayStr);
-                                                            if (!(leaveType === '연차' && leaveSubtype === '기간')) setEndDate(dayStr);
-                                                        }}
-                                                        className={`h-8 text-xs font-black rounded-lg transition-all ${isSelected
-                                                            ? 'bg-blue-600 text-white shadow-md shadow-blue-200 scale-105'
-                                                            : isDisabled
-                                                                ? `opacity-50 cursor-not-allowed ${dayOfWeek === 0 || isHoliday ? 'text-red-500' : 'text-blue-500'}`
-                                                                : `hover:bg-white ${isHoliday ? 'text-red-500' : 'text-slate-600'}`
-                                                            }`}
-                                                    >
-                                                        {format(day, 'd')}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                </div>
 
-                                {leaveType === '연차' && leaveSubtype === '기간' && (
-                                    <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-                                        <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider ml-1">종료 일자</label>
-                                        <div className="bg-slate-50 rounded-2xl p-2.5 border-2 border-slate-100 text-slate-800">
-                                            {/* Year / Month selectors */}
-                                            <div className="flex items-center gap-2 mb-2">
+                                        <div className="bg-slate-50 rounded-2xl p-3 border-2 border-slate-100">
+                                            <div className="flex items-center gap-2 mb-3">
                                                 <select
-                                                    value={endViewYear}
-                                                    onChange={e => setEndViewYear(Number(e.target.value))}
+                                                    value={startViewYear}
+                                                    onChange={e => setStartViewYear(Number(e.target.value))}
                                                     className="flex-1 text-xs font-bold bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-slate-700 focus:outline-none focus:border-blue-400"
                                                 >
                                                     {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 1 + i).map(y => (
@@ -512,59 +482,64 @@ export default function MemberPage() {
                                                     ))}
                                                 </select>
                                                 <select
-                                                    value={endViewMonthNum}
-                                                    onChange={e => setEndViewMonthNum(Number(e.target.value))}
+                                                    value={startViewMonthNum}
+                                                    onChange={e => setStartViewMonthNum(Number(e.target.value))}
                                                     className="flex-1 text-xs font-bold bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-slate-700 focus:outline-none focus:border-blue-400"
                                                 >
                                                     {Array.from({ length: 12 }, (_, i) => i).map(m => (
                                                         <option key={m} value={m}>{m + 1}월</option>
                                                     ))}
                                                 </select>
-                                                <span className="text-xs font-black text-blue-600 whitespace-nowrap">{endDate ? format(new Date(endDate), 'dd일') : '--'}</span>
                                             </div>
-                                            {/* Day grid */}
+
                                             <div className="grid grid-cols-7 gap-0.5 text-center mb-1">
                                                 {['일', '월', '화', '수', '목', '금', '토'].map((d, i) => (
                                                     <span key={d} className={`text-[10px] font-black ${i === 0 ? 'text-red-700' : i === 6 ? 'text-blue-700' : 'text-slate-700'}`}>{d}</span>
                                                 ))}
                                             </div>
+
                                             <div className="grid grid-cols-7 gap-0.5">
-                                                {Array.from({ length: new Date(endViewYear, endViewMonthNum, 1).getDay() }).map((_, i) => (
-                                                    <div key={i} className="h-8" />
+                                                {Array.from({ length: new Date(startViewYear, startViewMonthNum, 1).getDay() }).map((_, i) => (
+                                                    <div key={i} className="h-9" />
                                                 ))}
                                                 {eachDayOfInterval({
-                                                    start: new Date(endViewYear, endViewMonthNum, 1),
-                                                    end: new Date(endViewYear, endViewMonthNum + 1, 0)
+                                                    start: new Date(startViewYear, startViewMonthNum, 1),
+                                                    end: new Date(startViewYear, startViewMonthNum + 1, 0)
                                                 }).map((day) => {
                                                     const dayStr = format(day, 'yyyy-MM-dd');
-                                                    const isSelected = dayStr === endDate;
-                                                    const isStart = dayStr === startDate;
+                                                    const isStart = startDate && dayStr === startDate;
+                                                    const isEnd = endDate && dayStr === endDate;
+                                                    const isRange = leaveType === '연차' && leaveSubtype === '기간' && startDate && endDate && dayStr > startDate && dayStr < endDate;
                                                     const dayOfWeek = day.getDay();
                                                     const isHoliday = isKoreanHoliday(dayStr);
                                                     const isDisabled = dayOfWeek === 0 || dayOfWeek === 6;
+
                                                     return (
                                                         <button
                                                             key={dayStr}
                                                             type="button"
                                                             disabled={isDisabled}
-                                                            onClick={() => setEndDate(dayStr)}
-                                                            className={`h-8 text-xs font-black rounded-lg transition-all ${isSelected
-                                                                ? 'bg-blue-600 text-white shadow-md shadow-blue-200 scale-105 font-black'
-                                                                : isDisabled
-                                                                    ? `opacity-50 cursor-not-allowed ${dayOfWeek === 0 || isHoliday ? 'text-red-500' : 'text-blue-500'}`
-                                                                    : isStart
-                                                                        ? 'bg-blue-100 text-blue-600'
-                                                                        : `hover:bg-white ${isHoliday ? 'text-red-500' : 'text-slate-600'}`
+                                                            onClick={() => handleFormDateClick(dayStr)}
+                                                            className={`h-9 text-xs font-black transition-all relative ${isStart || isEnd
+                                                                ? 'bg-blue-600 text-white z-10 rounded-lg shadow-md shadow-blue-200'
+                                                                : isRange
+                                                                    ? 'bg-blue-50 text-blue-600'
+                                                                    : isDisabled
+                                                                        ? `opacity-30 cursor-not-allowed ${dayOfWeek === 0 || isHoliday ? 'text-red-500' : 'text-blue-500'}`
+                                                                        : `hover:bg-white rounded-lg ${isHoliday ? 'text-red-500' : 'text-slate-600'}`
                                                                 }`}
                                                         >
                                                             {format(day, 'd')}
+                                                            {isToday(day) && !isStart && !isEnd && (
+                                                                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-400 rounded-full" />
+                                                            )}
                                                         </button>
                                                     );
                                                 })}
                                             </div>
                                         </div>
                                     </div>
-                                )}
+                                </div>
                             </div>
 
                             <button
