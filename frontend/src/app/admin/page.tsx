@@ -148,7 +148,7 @@ export default function AdminPage() {
                                             <div className="flex flex-col gap-1 items-end">
                                                 {dayLeaves.length > 0 && (
                                                     <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-md border border-blue-100">
-                                                        {dayLeaves.length} PERS
+                                                        {dayLeaves.length}명
                                                     </span>
                                                 )}
                                                 {holidayName && (
