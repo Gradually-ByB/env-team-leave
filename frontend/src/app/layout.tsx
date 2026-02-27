@@ -22,6 +22,9 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "환경팀 휴무",
   },
+  icons: {
+    apple: "/apple-icon.png",
+  },
   formatDetection: {
     telephone: false,
   },
