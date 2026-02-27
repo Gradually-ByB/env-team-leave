@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isSameDay, isToday } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isSameDay, isToday, addDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { LogOut, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { getHolidayName } from '@/lib/koreanHolidays';
@@ -32,6 +32,46 @@ export default function AdminPage() {
             router.push('/');
         }
     }, [user, loading, router]);
+
+    const [todayLeaves, setTodayLeaves] = useState<Leave[]>([]);
+    const [tomorrowLeaves, setTomorrowLeaves] = useState<Leave[]>([]);
+
+    const fetchSummaryLeaves = React.useCallback(async () => {
+        if (!user || user.role !== 'admin') return;
+        try {
+            const today = new Date();
+            const tomorrow = addDays(today, 1);
+
+            // 현재 달과 다음 달의 데이터를 모두 가져와서 오늘/내일 필터링
+            const month1 = format(today, 'yyyy-MM');
+            const month2 = format(tomorrow, 'yyyy-MM');
+
+            const months = Array.from(new Set([month1, month2]));
+            const responses = await Promise.all(months.map(m => api.get(`/leaves?month=${m}`)));
+            const allLeaves = responses.flatMap(r => r.data);
+
+            const filterForDay = (day: Date) => {
+                const dayStr = format(day, 'yyyy-MM-dd');
+                return allLeaves.filter((l: Leave) => {
+                    const start = l.start_date.split('T')[0];
+                    const end = l.end_date.split('T')[0];
+                    const isWeekday = day.getDay() !== 0 && day.getDay() !== 6;
+                    return isWeekday && dayStr >= start && dayStr <= end;
+                });
+            };
+
+            setTodayLeaves(filterForDay(today));
+            setTomorrowLeaves(filterForDay(tomorrow));
+        } catch (err) {
+            console.error('Failed to fetch summary leaves', err);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        fetchSummaryLeaves();
+        const interval = setInterval(fetchSummaryLeaves, 10000);
+        return () => clearInterval(interval);
+    }, [fetchSummaryLeaves]);
 
     const fetchLeaves = React.useCallback(async () => {
         if (!user || user.role !== 'admin') return;
@@ -207,61 +247,114 @@ export default function AdminPage() {
 
                 {/* Right Component: Daily Summary & Stats */}
                 <aside className="space-y-8 flex flex-col h-full overflow-hidden">
-                    <div className="bg-white/90 backdrop-blur-md rounded-4xl p-8 shadow-2xl border border-white/20 flex-1 flex flex-col">
-                        <div className="flex flex-col gap-1 mb-6">
-                            <span className="text-[11px] font-black text-blue-600 uppercase tracking-widest">{selectedDay ? format(selectedDay, 'EEEE', { locale: ko }) : ''}</span>
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-2xl font-black text-slate-800">휴무 상세</h3>
-                                <div className="px-3 py-1.5 bg-slate-100 rounded-xl flex items-center gap-2 border border-slate-200">
-                                    <CalendarIcon className="w-3.5 h-3.5 text-slate-500" />
-                                    <span className="text-[11px] font-bold text-slate-700 leading-none pb-0.5">{selectedDay ? format(selectedDay, 'yyyy.MM.dd') : '날짜 선택'}</span>
+                    <div className="bg-white/90 backdrop-blur-md rounded-4xl p-8 shadow-2xl border border-white/20 flex-1 flex flex-col overflow-hidden">
+                        {/* Today Section */}
+                        <div className="flex-1 flex flex-col min-h-0">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex flex-col gap-1">
+                                    <h3 className="text-xl font-black text-slate-800">오늘의 휴무자</h3>
                                 </div>
+                                <div className="px-3 py-1.5 bg-blue-50 rounded-xl flex items-center gap-2 border border-blue-100">
+                                    <CalendarIcon className="w-3.5 h-3.5 text-blue-500" />
+                                    <span className="text-[11px] font-bold text-blue-700 leading-none pb-0.5">{format(new Date(), 'MM.dd(EEE)', { locale: ko })}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide space-y-3">
+                                {todayLeaves.length > 0 ? todayLeaves.map((l, i) => (
+                                    <div key={i} className="group relative flex flex-col gap-3 p-4 bg-white hover:bg-blue-50/30 rounded-2xl transition-all border border-slate-100 hover:border-blue-100 shadow-sm">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div>
+                                                    <p className="text-sm font-bold text-slate-800">{l.user_name}</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{l.user_job_role}</p>
+                                                </div>
+                                            </div>
+                                            <span className={`inline-block px-2 py-0.5 text-[9px] font-black rounded-md ${l.leave_type === '연차' ? 'bg-blue-100 text-blue-700' :
+                                                    l.leave_type === '반차' ? 'bg-green-100 text-green-700' :
+                                                        l.leave_type === '대체휴무' ? 'bg-amber-100 text-amber-700' :
+                                                            l.leave_type === '공휴일' ? 'bg-red-100 text-red-700' :
+                                                                'bg-slate-100 text-slate-700'
+                                                }`}>
+                                                {l.leave_type}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                                            <div className="flex items-center gap-1.5 text-slate-400">
+                                                <Info className="w-3 h-3" />
+                                                <span className="text-[10px] font-bold text-slate-500">{l.leave_subtype}</span>
+                                            </div>
+                                            {l.leave_subtype === '기간' && (
+                                                <p className="text-[10px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                                                    {format(new Date(l.start_date), 'MM.dd')} - {format(new Date(l.end_date), 'MM.dd')}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-center py-8 opacity-60">
+                                        <Info className="w-8 h-8 text-slate-300 mb-2" />
+                                        <p className="text-xs text-slate-400 font-medium">오늘 휴무자가 없습니다.</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        <div className="space-y-4 flex-1 overflow-y-auto pr-2 scrollbar-hide">
-                            {selectedDayLeaves.length > 0 ? selectedDayLeaves.map((l, i) => (
-                                <div key={i} className="group relative flex flex-col gap-4 p-5 bg-white hover:bg-blue-50/50 rounded-3xl transition-all border border-slate-100 hover:border-blue-200 shadow-sm hover:shadow-md">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div>
-                                                <p className="font-bold text-slate-800">{l.user_name}</p>
-                                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">{l.user_job_role}</p>
-                                            </div>
-                                        </div>
-                                        <span className={`inline-block px-2.5 py-1 text-[10px] font-black rounded-lg ${l.leave_type === '연차' ? 'bg-blue-100 text-blue-700' :
-                                            l.leave_type === '반차' ? 'bg-green-100 text-green-700' :
-                                                l.leave_type === '대체휴무' ? 'bg-amber-100 text-amber-700' :
-                                                    l.leave_type === '공휴일' ? 'bg-red-100 text-red-700' :
-                                                        'bg-slate-100 text-slate-700'
-                                            }`}>
-                                            {l.leave_type}
-                                        </span>
-                                    </div>
+                        {/* Divider */}
+                        <div className="h-px bg-slate-100 my-8 shadow-[0_1px_2px_rgba(0,0,0,0.02)]" />
 
-                                    <div className="flex items-center justify-between pt-2 border-t border-slate-50">
-                                        <div className="flex items-center gap-1.5 text-slate-400">
-                                            <Info className="w-3.5 h-3.5" />
-                                            <span className="text-xs font-bold text-slate-500">{l.leave_subtype}</span>
+                        {/* Tomorrow Section */}
+                        <div className="flex-1 flex flex-col min-h-0">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex flex-col gap-1">
+                                    <h3 className="text-xl font-black text-slate-800">내일의 휴무자</h3>
+                                </div>
+                                <div className="px-3 py-1.5 bg-slate-100 rounded-xl flex items-center gap-2 border border-slate-200">
+                                    <CalendarIcon className="w-3.5 h-3.5 text-slate-500" />
+                                    <span className="text-[11px] font-bold text-slate-700 leading-none pb-0.5">{format(addDays(new Date(), 1), 'MM.dd(EEE)', { locale: ko })}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide space-y-3">
+                                {tomorrowLeaves.length > 0 ? tomorrowLeaves.map((l, i) => (
+                                    <div key={i} className="group relative flex flex-col gap-3 p-4 bg-white hover:bg-slate-50/80 rounded-2xl transition-all border border-slate-100 hover:border-slate-200 shadow-sm">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div>
+                                                    <p className="text-sm font-bold text-slate-800">{l.user_name}</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{l.user_job_role}</p>
+                                                </div>
+                                            </div>
+                                            <span className={`inline-block px-2 py-0.5 text-[9px] font-black rounded-md ${l.leave_type === '연차' ? 'bg-blue-100 text-blue-700' :
+                                                    l.leave_type === '반차' ? 'bg-green-100 text-green-700' :
+                                                        l.leave_type === '대체휴무' ? 'bg-amber-100 text-amber-700' :
+                                                            l.leave_type === '공휴일' ? 'bg-red-100 text-red-700' :
+                                                                'bg-slate-100 text-slate-700'
+                                                }`}>
+                                                {l.leave_type}
+                                            </span>
                                         </div>
-                                        {l.leave_subtype === '기간' && (
-                                            <p className="text-[11px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                                                {format(new Date(l.start_date), 'MM.dd', { locale: ko })} - {format(new Date(l.end_date), 'MM.dd', { locale: ko })}
-                                            </p>
-                                        )}
+                                        <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                                            <div className="flex items-center gap-1.5 text-slate-400">
+                                                <Info className="w-3 h-3" />
+                                                <span className="text-[10px] font-bold text-slate-500">{l.leave_subtype}</span>
+                                            </div>
+                                            {l.leave_subtype === '기간' && (
+                                                <p className="text-[10px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                                                    {format(new Date(l.start_date), 'MM.dd')} - {format(new Date(l.end_date), 'MM.dd')}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            )) : (
-                                <div className="h-full flex flex-col items-center justify-center text-center p-8">
-                                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                                        <Info className="w-8 h-8 text-slate-300" />
+                                )) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-center py-8 opacity-60">
+                                        <Info className="w-8 h-8 text-slate-300 mb-2" />
+                                        <p className="text-xs text-slate-400 font-medium">내일 휴무자가 없습니다.</p>
                                     </div>
-                                    <p className="text-slate-400 font-medium">휴무자 데이터가 없습니다.</p>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
-
                 </aside>
             </main>
         </div>
