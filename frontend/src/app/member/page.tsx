@@ -98,7 +98,7 @@ export default function MemberPage() {
     const calendarDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-24">
+        <div className="min-h-screen bg-transparent pb-24">
             {/* Header */}
             <header className="bg-white px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-10">
                 <div className="flex items-center gap-3">
@@ -199,7 +199,7 @@ export default function MemberPage() {
 
                 {/* My Leaves */}
                 <section className="space-y-3">
-                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 px-2">
+                    <h2 className="text-lg font-bold text-white flex items-center gap-2 px-2">
                         <ClipboardList className="w-5 h-5 text-blue-600" />
                         일정 상세
                     </h2>
@@ -255,7 +255,7 @@ export default function MemberPage() {
 
                 {/* Team Leaves */}
                 <section className="space-y-3">
-                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 px-2">
+                    <h2 className="text-lg font-bold text-white flex items-center gap-2 px-2">
                         <Users className="w-5 h-5 text-blue-600" />
                         팀원 휴무
                     </h2>

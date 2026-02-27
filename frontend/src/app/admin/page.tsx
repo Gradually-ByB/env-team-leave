@@ -57,7 +57,7 @@ export default function AdminPage() {
     const selectedDayLeaves = selectedDay ? getDayLeaves(selectedDay) : [];
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col">
+        <div className="min-h-screen bg-transparent flex flex-col">
             {/* Sidebar/Header Integration */}
             <header className="bg-white px-8 py-4 flex items-center justify-between shadow-sm z-10 border-b border-slate-100">
                 <div className="flex items-center gap-4">
@@ -65,8 +65,8 @@ export default function AdminPage() {
                         <Image src="/logo.png" alt="환경팀 로고" width={48} height={48} className="object-contain" priority />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold text-slate-800">환경팀 휴무 통합관리 시스템</h1>
-                        <p className="text-sm text-slate-500 font-medium">관리자 전용 대시보드</p>
+                        <h1 className="text-xl font-bold text-slate-800">환경팀 휴무 일정</h1>
+                        <p className="text-sm text-slate-500 font-medium">관리자 전용</p>
                     </div>
                 </div>
 
@@ -85,7 +85,7 @@ export default function AdminPage() {
 
             <main className="flex-1 p-8 grid grid-cols-1 xl:grid-cols-[7fr_3fr] gap-8 overflow-hidden">
                 {/* Left Component: Main Calendar */}
-                <section className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 flex flex-col">
+                <section className="bg-white rounded-4xl p-8 shadow-sm border border-slate-100 flex flex-col">
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-4">
                             <h2 className="text-2xl font-bold text-slate-800">{format(currentMonth, 'yyyy년 MM월')}</h2>
@@ -106,7 +106,7 @@ export default function AdminPage() {
 
                         {/* Calendar Cells */}
                         {Array.from({ length: monthStart.getDay() }).map((_, i) => (
-                            <div key={`pad-${i}`} className="bg-white min-h-[120px]" />
+                            <div key={`pad-${i}`} className="bg-white min-h-30" />
                         ))}
 
                         {calendarDays.map((day) => {
@@ -119,7 +119,7 @@ export default function AdminPage() {
                                 <div
                                     key={day.toISOString()}
                                     onClick={() => setSelectedDay(day)}
-                                    className={`bg-white min-h-[120px] p-3 transition-all cursor-pointer group ${isSelected ? 'ring-2 ring-blue-500 z-10' : 'hover:bg-slate-50'}`}
+                                    className={`bg-white min-h-30 p-3 transition-all cursor-pointer group ${isSelected ? 'ring-2 ring-blue-500 z-10' : 'hover:bg-slate-50'}`}
                                 >
                                     <div className="flex flex-row-reverse justify-between items-start mb-2">
                                         <span className={`text-lg font-bold flex items-center justify-center w-9 h-9 rounded-full ${isToday(day) ? 'bg-blue-600 text-white' : day.getDay() === 0 || holidayName ? 'text-red-500' : day.getDay() === 6 ? 'text-blue-500' : 'text-slate-900'}`}>
@@ -132,7 +132,7 @@ export default function AdminPage() {
                                                 </span>
                                             )}
                                             {holidayName && (
-                                                <span className="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-md truncate max-w-[60px]" title={holidayName}>
+                                                <span className="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-md truncate max-w-15" title={holidayName}>
                                                     {holidayName}
                                                 </span>
                                             )}
@@ -166,9 +166,9 @@ export default function AdminPage() {
 
                 {/* Right Component: Daily Summary & Stats */}
                 <aside className="space-y-8 flex flex-col h-full overflow-hidden">
-                    <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 flex-1 flex flex-col">
+                    <div className="bg-white rounded-4xl p-8 shadow-sm border border-slate-100 flex-1 flex flex-col">
                         <div className="flex items-center justify-between mb-8">
-                            <h3 className="text-xl font-bold text-slate-800">일별 휴무 상세</h3>
+                            <h3 className="text-xl font-bold text-white">일별 휴무 상세</h3>
                             <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl">
                                 <Calendar className="w-4 h-4 text-blue-600" />
                                 <span className="text-xs font-bold text-slate-600">{selectedDay ? format(selectedDay, 'yyyy.MM.dd') : '날짜 선택'}</span>
@@ -177,7 +177,7 @@ export default function AdminPage() {
 
                         <div className="space-y-4 flex-1 overflow-y-auto pr-2 scrollbar-hide">
                             {selectedDayLeaves.length > 0 ? selectedDayLeaves.map((l, i) => (
-                                <div key={i} className="group flex items-center gap-4 p-4 bg-slate-50 hover:bg-blue-50 rounded-2xl transition-all border border-transparent hover:border-blue-100 h-20 min-h-[80px]">
+                                <div key={i} className="group flex items-center gap-4 p-4 bg-slate-50 hover:bg-blue-50 rounded-2xl transition-all border border-transparent hover:border-blue-100 h-20 min-h-20">
                                     <div className="flex-1 flex items-center gap-2">
                                         <p className="font-bold text-slate-800">{l.user_name}</p>
                                         <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md uppercase tracking-tight">
