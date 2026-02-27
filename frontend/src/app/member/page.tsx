@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isToday, startOfWeek, endOfWeek } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -18,8 +19,16 @@ interface Leave {
     user_name?: string;
 }
 
+
 export default function MemberPage() {
-    const { user, logout } = useAuth();
+    const { user, logout, loading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/');
+        }
+    }, [user, loading, router]);
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [myLeaves, setMyLeaves] = useState<Leave[]>([]);
     const [teamLeaves, setTeamLeaves] = useState<Leave[]>([]);

@@ -8,6 +8,7 @@ import { ko } from 'date-fns/locale';
 import { LogOut, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { getHolidayName } from '@/lib/koreanHolidays';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface Leave {
     id: number;
@@ -20,22 +21,29 @@ interface Leave {
 }
 
 export default function AdminPage() {
-    const { user, logout } = useAuth();
+    const { user, logout, loading } = useAuth();
+    const router = useRouter();
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [leaves, setLeaves] = useState<Leave[]>([]);
     const [selectedDay, setSelectedDay] = useState<Date | null>(new Date());
 
+    useEffect(() => {
+        if (!loading && (!user || user.role !== 'admin')) {
+            router.push('/');
+        }
+    }, [user, loading, router]);
+
     const fetchLeaves = React.useCallback(async () => {
+        if (!user || user.role !== 'admin') return;
         try {
             const response = await api.get(`/leaves?month=${format(currentMonth, 'yyyy-MM')}`);
             setLeaves(response.data);
         } catch (err) {
             console.error('Failed to fetch leaves', err);
         }
-    }, [currentMonth]);
+    }, [currentMonth, user]);
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchLeaves();
     }, [fetchLeaves]);
 
