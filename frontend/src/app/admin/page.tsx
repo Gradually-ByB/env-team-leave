@@ -52,11 +52,13 @@ export default function AdminPage() {
 
             const filterForDay = (day: Date) => {
                 const dayStr = format(day, 'yyyy-MM-dd');
+                const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+                if (isWeekend) return []; // 주말이면 아예 빈 배열 반환
+
                 return allLeaves.filter((l: Leave) => {
                     const start = l.start_date.split('T')[0];
                     const end = l.end_date.split('T')[0];
-                    const isWeekday = day.getDay() !== 0 && day.getDay() !== 6;
-                    return isWeekday && dayStr >= start && dayStr <= end;
+                    return dayStr >= start && dayStr <= end;
                 });
             };
 
@@ -261,7 +263,14 @@ export default function AdminPage() {
                             </div>
 
                             <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide space-y-3">
-                                {todayLeaves.length > 0 ? todayLeaves.map((l, i) => (
+                                {new Date().getDay() === 0 || new Date().getDay() === 6 ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-center py-8 opacity-60">
+                                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                                            <CalendarIcon className="w-6 h-6 text-slate-300" />
+                                        </div>
+                                        <p className="text-xs text-slate-400 font-bold">주말은 휴무자가 없습니다.</p>
+                                    </div>
+                                ) : todayLeaves.length > 0 ? todayLeaves.map((l, i) => (
                                     <div key={i} className="group relative flex flex-col gap-3 p-4 bg-white hover:bg-blue-50/30 rounded-2xl transition-all border border-slate-100 hover:border-blue-100 shadow-sm">
                                         <div className="flex items-start justify-between">
                                             <div className="flex items-center gap-3">
@@ -271,10 +280,10 @@ export default function AdminPage() {
                                                 </div>
                                             </div>
                                             <span className={`inline-block px-2 py-0.5 text-[9px] font-black rounded-md ${l.leave_type === '연차' ? 'bg-blue-100 text-blue-700' :
-                                                    l.leave_type === '반차' ? 'bg-green-100 text-green-700' :
-                                                        l.leave_type === '대체휴무' ? 'bg-amber-100 text-amber-700' :
-                                                            l.leave_type === '공휴일' ? 'bg-red-100 text-red-700' :
-                                                                'bg-slate-100 text-slate-700'
+                                                l.leave_type === '반차' ? 'bg-green-100 text-green-700' :
+                                                    l.leave_type === '대체휴무' ? 'bg-amber-100 text-amber-700' :
+                                                        l.leave_type === '공휴일' ? 'bg-red-100 text-red-700' :
+                                                            'bg-slate-100 text-slate-700'
                                                 }`}>
                                                 {l.leave_type}
                                             </span>
@@ -316,7 +325,14 @@ export default function AdminPage() {
                             </div>
 
                             <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide space-y-3">
-                                {tomorrowLeaves.length > 0 ? tomorrowLeaves.map((l, i) => (
+                                {addDays(new Date(), 1).getDay() === 0 || addDays(new Date(), 1).getDay() === 6 ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-center py-8 opacity-60">
+                                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                                            <CalendarIcon className="w-6 h-6 text-slate-300" />
+                                        </div>
+                                        <p className="text-xs text-slate-400 font-bold">주말은 휴무자가 없습니다.</p>
+                                    </div>
+                                ) : tomorrowLeaves.length > 0 ? tomorrowLeaves.map((l, i) => (
                                     <div key={i} className="group relative flex flex-col gap-3 p-4 bg-white hover:bg-slate-50/80 rounded-2xl transition-all border border-slate-100 hover:border-slate-200 shadow-sm">
                                         <div className="flex items-start justify-between">
                                             <div className="flex items-center gap-3">
@@ -326,10 +342,10 @@ export default function AdminPage() {
                                                 </div>
                                             </div>
                                             <span className={`inline-block px-2 py-0.5 text-[9px] font-black rounded-md ${l.leave_type === '연차' ? 'bg-blue-100 text-blue-700' :
-                                                    l.leave_type === '반차' ? 'bg-green-100 text-green-700' :
-                                                        l.leave_type === '대체휴무' ? 'bg-amber-100 text-amber-700' :
-                                                            l.leave_type === '공휴일' ? 'bg-red-100 text-red-700' :
-                                                                'bg-slate-100 text-slate-700'
+                                                l.leave_type === '반차' ? 'bg-green-100 text-green-700' :
+                                                    l.leave_type === '대체휴무' ? 'bg-amber-100 text-amber-700' :
+                                                        l.leave_type === '공휴일' ? 'bg-red-100 text-red-700' :
+                                                            'bg-slate-100 text-slate-700'
                                                 }`}>
                                                 {l.leave_type}
                                             </span>
