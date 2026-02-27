@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isToday, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isToday, startOfWeek, endOfWeek, isWeekend } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Calendar as CalendarIcon, ClipboardList, Users, LogOut, ChevronLeft, ChevronRight, PlusCircle, Clock, Trash2 } from 'lucide-react';
 import { isKoreanHoliday } from '@/lib/koreanHolidays';
@@ -69,6 +69,16 @@ export default function MemberPage() {
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // 주말 체크
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        if (isWeekend(start) || isWeekend(end)) {
+            alert('토요일과 일요일은 휴무를 등록할 수 없습니다.');
+            return;
+        }
+
         try {
             await api.post('/leaves', {
                 leave_type: leaveType,
