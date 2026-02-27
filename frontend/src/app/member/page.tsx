@@ -338,9 +338,10 @@ export default function MemberPage() {
             {/* Floating Action Button */}
             <button
                 onClick={() => setShowForm(true)}
-                className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-20"
+                className="fixed bottom-6 right-6 h-14 w-auto px-5 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-20"
             >
                 <PlusCircle className="w-8 h-8" />
+                <span className="font-bold ml-1">등록</span>
             </button>
 
             {/* Registration Modal */}
