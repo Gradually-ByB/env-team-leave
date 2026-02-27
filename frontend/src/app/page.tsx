@@ -103,13 +103,13 @@ export default function LoginPage() {
                 {users.some(u => u.role === 'admin') && (
                   <div>
                     <label className="block text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-2 ml-1">관리자</label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-4 gap-2">
                       {users.filter(u => u.role === 'admin').map((u) => (
                         <button
                           key={u.id}
                           type="button"
                           onClick={() => setSelectedName(u.name)}
-                          className={`h-14 rounded-xl text-xl font-bold transition-all ${selectedName === u.name
+                          className={`h-11 rounded-xl text-base font-bold transition-all ${selectedName === u.name
                             ? 'bg-blue-600 text-white shadow-md shadow-blue-200 scale-95'
                             : 'bg-white text-slate-800 hover:bg-white hover:shadow-sm border border-slate-200'
                             }`}
@@ -124,13 +124,13 @@ export default function LoginPage() {
                 {/* 팀원 섹션 */}
                 <div>
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">팀원</label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     {users.filter(u => u.role === 'member').map((u) => (
                       <button
                         key={u.id}
                         type="button"
                         onClick={() => setSelectedName(u.name)}
-                        className={`h-14 rounded-xl text-xl font-bold transition-all ${selectedName === u.name
+                        className={`h-11 rounded-xl text-base font-bold transition-all ${selectedName === u.name
                           ? 'bg-blue-600 text-white shadow-md shadow-blue-200 scale-95'
                           : 'bg-white text-slate-600 hover:bg-white hover:shadow-sm border border-slate-100'
                           }`}
