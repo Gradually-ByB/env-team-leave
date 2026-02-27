@@ -102,7 +102,7 @@ export default function LoginPage() {
                 {/* 관리자 섹션 */}
                 {users.some(u => u.role === 'admin') && (
                   <div>
-                    <label className="block text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1 ml-1">관리자</label>
+                    <label className="block text-[10px] font-bold text-blue-700 uppercase tracking-wider mb-1 ml-1">관리자</label>
                     <div className="grid grid-cols-5 gap-1">
                       {users.filter(u => u.role === 'admin').map((u) => (
                         <button
@@ -110,7 +110,7 @@ export default function LoginPage() {
                           type="button"
                           onClick={() => setSelectedName(u.name)}
                           className={`h-9 rounded-lg text-sm font-bold transition-all ${selectedName === u.name
-                            ? 'bg-blue-600 text-white shadow-md shadow-blue-200 scale-95'
+                            ? 'bg-blue-700 text-white shadow-md shadow-blue-200 scale-95'
                             : 'bg-white text-slate-800 hover:bg-white hover:shadow-sm border border-slate-200'
                             }`}
                         >
@@ -131,7 +131,7 @@ export default function LoginPage() {
                         type="button"
                         onClick={() => setSelectedName(u.name)}
                         className={`h-9 rounded-lg text-sm font-bold transition-all ${selectedName === u.name
-                          ? 'bg-blue-600 text-white shadow-md shadow-blue-200 scale-95'
+                          ? 'bg-blue-700 text-white shadow-md shadow-blue-200 scale-95'
                           : 'bg-white text-slate-600 hover:bg-white hover:shadow-sm border border-slate-100'
                           }`}
                       >
@@ -153,13 +153,13 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="4자리"
                     disabled={!selectedName}
-                    className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-black text-lg tracking-[0.25em] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-sm placeholder:font-normal placeholder:text-slate-400 placeholder:tracking-normal"
+                    className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-black text-lg tracking-[0.25em] focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-transparent transition-all placeholder:text-sm placeholder:font-normal placeholder:text-slate-400 placeholder:tracking-normal"
                     required
                   />
                 </div>
                 <button
                   type="submit"
-                  className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-100 flex items-center justify-center group whitespace-nowrap"
+                  className="h-12 px-6 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-100 flex items-center justify-center group whitespace-nowrap"
                 >
                   로그인
                   <ChevronRight className="w-5 h-5 ml-1 group-hover:translate-x-1 transition-transform" />
