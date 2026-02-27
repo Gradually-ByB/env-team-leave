@@ -45,6 +45,20 @@ export default function AdminPage() {
 
     useEffect(() => {
         fetchLeaves();
+
+        // 10초마다 자동 새로고침 (Polling)
+        const interval = setInterval(() => {
+            fetchLeaves();
+        }, 10000);
+
+        // 창이 다시 활성화될 때 즉시 새로고침
+        const handleFocus = () => fetchLeaves();
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', handleFocus);
+        };
     }, [fetchLeaves]);
 
     const monthStart = startOfMonth(currentMonth);
