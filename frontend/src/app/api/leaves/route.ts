@@ -12,10 +12,13 @@ export async function GET(req: NextRequest) {
 
     try {
         const query = `
-            SELECT l.*, u.name as user_name, u.role as user_role, u.job_role as user_job_role
+            SELECT 
+                l.id, l.user_id, l.leave_type, l.leave_subtype, 
+                l.start_date, l.end_date, l.created_at,
+                u.name as user_name, u.role as user_role, u.job_role as user_job_role
             FROM leaves l
             JOIN users u ON l.user_id = u.id
-            WHERE (start_date < (($1 || '-01')::DATE + INTERVAL '1 month') AND end_date >= ($1 || '-01')::DATE)
+            WHERE (l.start_date < (($1 || '-01')::DATE + INTERVAL '1 month') AND l.end_date >= ($1 || '-01')::DATE)
         `;
         const result = await pool.query(query, [month]);
         return NextResponse.json(result.rows);

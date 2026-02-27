@@ -9,11 +9,14 @@ export async function GET(req: NextRequest) {
 
     try {
         const query = `
-            SELECT l.*, u.name as user_name, u.job_role as user_job_role
+            SELECT 
+                l.id, l.user_id, l.leave_type, l.leave_subtype, 
+                l.start_date, l.end_date, l.created_at,
+                u.name as user_name, u.job_role as user_job_role
             FROM leaves l
             JOIN users u ON l.user_id = u.id
-            WHERE (start_date <= (date_trunc('week', (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::DATE + 1)::DATE + 5)
-              AND end_date >= (date_trunc('week', (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::DATE + 1)::DATE - 1))
+            WHERE (l.start_date <= (date_trunc('week', (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::DATE + 1)::DATE + 5)
+              AND l.end_date >= (date_trunc('week', (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Seoul')::DATE + 1)::DATE - 1))
               AND u.id != $1
         `;
         const result = await pool.query(query, [user.id]);

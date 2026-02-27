@@ -229,7 +229,8 @@ export default function MemberPage() {
                                             <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${getLeaveColor(leave.leave_type, isToday)}`}>
                                                 {leave.leave_type}
                                             </span>
-                                            <span className="text-sm font-bold text-slate-700">{leave.leave_subtype}</span>
+                                            <span className="text-sm font-bold text-slate-700">{leave.user_name || user?.name}</span>
+                                            <span className="text-xs font-medium text-slate-400">{leave.leave_subtype}</span>
                                         </div>
                                         <p className="text-xs text-slate-500 flex items-center gap-1 font-medium">
                                             <Clock className="w-3 h-3" />
@@ -352,7 +353,10 @@ export default function MemberPage() {
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
                     <div className="w-full max-w-lg bg-white rounded-t-[40px] sm:rounded-3xl p-6 animate-in slide-in-from-bottom duration-300">
                         <div className="flex justify-between items-center mb-5">
-                            <h2 className="text-xl font-black text-slate-800">휴무 등록</h2>
+                            <div>
+                                <h2 className="text-xl font-black text-slate-800">휴무 등록</h2>
+                                <p className="text-xs font-bold text-blue-600 mt-1">{user?.name}님으로 신청됩니다.</p>
+                            </div>
                             <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600 font-bold p-1">닫기</button>
                         </div>
 
