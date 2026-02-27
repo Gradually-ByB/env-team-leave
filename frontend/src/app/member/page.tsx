@@ -77,7 +77,6 @@ export default function MemberPage() {
     const handleDelete = async () => {
         if (!leaveToDelete) return;
         try {
-            console.log('Attempting delete for leave id:', leaveToDelete);
             await api.delete(`/leaves/${leaveToDelete}`);
             // Optimistically remove from UI state
             setMyLeaves(prev => prev.filter(l => l.id !== leaveToDelete));
@@ -162,6 +161,7 @@ export default function MemberPage() {
                                     case '연차': return 'bg-blue-600 text-white shadow-blue-100';
                                     case '반차': return 'bg-green-300 text-white shadow-green-100';
                                     case '대체휴무': return 'bg-amber-300 text-white shadow-amber-100';
+                                    case '공휴일': return 'bg-red-200 text-red-700 shadow-red-100';
                                     default: return 'bg-slate-100';
                                 }
                             };
@@ -171,6 +171,7 @@ export default function MemberPage() {
                                     case '연차': return 'bg-blue-400';
                                     case '반차': return 'bg-green-300';
                                     case '대체휴무': return 'bg-amber-200';
+                                    case '공휴일': return 'bg-red-400';
                                     default: return 'bg-slate-300';
                                 }
                             };
@@ -216,6 +217,7 @@ export default function MemberPage() {
                                     case '연차': return 'bg-blue-100 text-blue-700';
                                     case '반차': return 'bg-green-50 text-green-700';
                                     case '대체휴무': return 'bg-amber-50 text-amber-700';
+                                    case '공휴일': return 'bg-red-50 text-red-600';
                                     default: return 'bg-slate-100 text-slate-700';
                                 }
                             };
@@ -241,7 +243,7 @@ export default function MemberPage() {
                                     <div className="flex items-center gap-3">
                                         <button type="button"
                                             onClick={() => setLeaveToDelete(leave.id)}
-                                            className="p-2 text-slate-300 hover:text-red-500 transition-colors">
+                                            className="p-2 text-slate-900 hover:text-red-500 transition-colors">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
@@ -271,6 +273,7 @@ export default function MemberPage() {
                                     case '연차': return 'bg-blue-50 text-blue-600';
                                     case '반차': return 'bg-green-50 text-green-500';
                                     case '대체휴무': return 'bg-amber-50 text-amber-500';
+                                    case '공휴일': return 'bg-red-50 text-red-500';
                                     default: return 'bg-slate-50 text-slate-600';
                                 }
                             };
@@ -303,7 +306,7 @@ export default function MemberPage() {
                                         return (
                                             <div key={dayStr} className={`flex items-start gap-3 ${isToday(day) ? 'bg-blue-50/50 -mx-2 px-2 py-2 rounded-xl' : ''}`}>
                                                 <div className="flex flex-col items-center min-w-[45px] pt-0.5">
-                                                    <span className={`text-[10px] font-bold ${day.getDay() === 0 ? 'text-red-500' : day.getDay() === 6 ? 'text-blue-500' : 'text-slate-400'}`}>
+                                                    <span className={`text-[10px] font-bold ${day.getDay() === 0 || isKoreanHoliday(dayStr) ? 'text-red-500' : day.getDay() === 6 ? 'text-blue-500' : 'text-slate-400'}`}>
                                                         {format(day, 'eee', { locale: ko })}
                                                     </span>
                                                     <span className={`text-sm font-black ${isToday(day) ? 'text-blue-600' : 'text-slate-700'}`}>
@@ -347,55 +350,64 @@ export default function MemberPage() {
             {/* Registration Modal */}
             {showForm && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
-                    <div className="w-full max-w-lg bg-white rounded-t-[40px] sm:rounded-3xl p-8 animate-in slide-in-from-bottom duration-300">
-                        <div className="flex justify-between items-center mb-8">
-                            <h2 className="text-2xl font-bold text-slate-800">휴무 등록</h2>
+                    <div className="w-full max-w-lg bg-white rounded-t-[40px] sm:rounded-3xl p-6 animate-in slide-in-from-bottom duration-300">
+                        <div className="flex justify-between items-center mb-5">
+                            <h2 className="text-xl font-black text-slate-800">휴무 등록</h2>
                             <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600 font-bold p-1">Close</button>
                         </div>
 
-                        <form onSubmit={handleRegister} className="space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
+                        <form onSubmit={handleRegister} className="space-y-4">
+                            <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">휴무 구분</label>
-                                    <select
-                                        value={leaveType}
-                                        onChange={(e) => setLeaveType(e.target.value)}
-                                        className="w-full h-12 bg-slate-50 border-none rounded-2xl px-4 font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="연차">연차</option>
-                                        <option value="반차">반차</option>
-                                        <option value="대체휴무">대체휴무</option>
-                                    </select>
+                                    <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider ml-1">휴무 구분</label>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {['연차', '반차', '대체휴무', '공휴일'].map((type) => (
+                                            <button
+                                                key={type}
+                                                type="button"
+                                                onClick={() => {
+                                                    setLeaveType(type);
+                                                    if (type === '연차') setLeaveSubtype('종일');
+                                                    else if (type === '반차') setLeaveSubtype('오전');
+                                                    else setLeaveSubtype('일반');
+                                                }}
+                                                className={`py-2.5 rounded-xl text-base font-black transition-all border-2 ${leaveType === type
+                                                    ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100'
+                                                    : 'bg-white border-slate-100 text-slate-500 hover:border-blue-200'
+                                                    }`}
+                                            >
+                                                {type}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
+
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">상세 구분</label>
-                                    <select
-                                        value={leaveSubtype}
-                                        onChange={(e) => setLeaveSubtype(e.target.value)}
-                                        className="w-full h-12 bg-slate-50 border-none rounded-2xl px-4 font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        {leaveType === '연차' ? (
-                                            <>
-                                                <option value="종일">종일</option>
-                                                <option value="기간">기간</option>
-                                            </>
-                                        ) : leaveType === '반차' ? (
-                                            <>
-                                                <option value="오전">오전</option>
-                                                <option value="오후">오후</option>
-                                            </>
-                                        ) : (
-                                            <option value="일반">일반</option>
-                                        )}
-                                    </select>
+                                    <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider ml-1">상세 구분</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {(leaveType === '연차' ? ['종일', '기간'] :
+                                            leaveType === '반차' ? ['오전', '오후'] : ['일반']).map((subtype) => (
+                                                <button
+                                                    key={subtype}
+                                                    type="button"
+                                                    onClick={() => setLeaveSubtype(subtype)}
+                                                    className={`py-2.5 rounded-xl text-base font-black transition-all border-2 ${leaveSubtype === subtype
+                                                        ? 'bg-blue-50 border-blue-600 text-blue-600'
+                                                        : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'
+                                                        }`}
+                                                >
+                                                    {subtype}
+                                                </button>
+                                            ))}
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Custom Date Picker Integration */}
                             <div className="space-y-6">
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider ml-1">신청 일자 (시작)</label>
-                                    <div className="bg-slate-50 rounded-2xl p-3 border-2 border-slate-100">
+                                    <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider ml-1">신청 일자 (시작)</label>
+                                    <div className="bg-slate-50 rounded-2xl p-2.5 border-2 border-slate-100">
                                         {/* Year / Month selectors */}
                                         <div className="flex items-center gap-2 mb-2">
                                             <select
@@ -421,7 +433,7 @@ export default function MemberPage() {
                                         {/* Day grid */}
                                         <div className="grid grid-cols-7 gap-0.5 text-center mb-1">
                                             {['일', '월', '화', '수', '목', '금', '토'].map((d, i) => (
-                                                <span key={d} className={`text-[9px] font-bold ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-slate-300'}`}>{d}</span>
+                                                <span key={d} className={`text-[10px] font-black ${i === 0 ? 'text-red-700' : i === 6 ? 'text-blue-700' : 'text-slate-700'}`}>{d}</span>
                                             ))}
                                         </div>
                                         <div className="grid grid-cols-7 gap-0.5">
@@ -436,7 +448,7 @@ export default function MemberPage() {
                                                 const isSelected = dayStr === startDate;
                                                 const dayOfWeek = day.getDay();
                                                 const isHoliday = isKoreanHoliday(dayStr);
-                                                const isDisabled = dayOfWeek === 0 || dayOfWeek === 6 || isHoliday;
+                                                const isDisabled = dayOfWeek === 0 || dayOfWeek === 6;
                                                 return (
                                                     <button
                                                         key={dayStr}
@@ -446,11 +458,11 @@ export default function MemberPage() {
                                                             setStartDate(dayStr);
                                                             if (!(leaveType === '연차' && leaveSubtype === '기간')) setEndDate(dayStr);
                                                         }}
-                                                        className={`h-8 text-xs font-bold rounded-lg transition-all ${isSelected
+                                                        className={`h-8 text-xs font-black rounded-lg transition-all ${isSelected
                                                             ? 'bg-blue-600 text-white shadow-md shadow-blue-200 scale-105'
                                                             : isDisabled
-                                                                ? `opacity-30 cursor-not-allowed ${dayOfWeek === 0 || isHoliday ? 'text-red-500' : 'text-blue-500'}`
-                                                                : `hover:bg-white text-slate-600`
+                                                                ? `opacity-50 cursor-not-allowed ${dayOfWeek === 0 || isHoliday ? 'text-red-500' : 'text-blue-500'}`
+                                                                : `hover:bg-white ${isHoliday ? 'text-red-500' : 'text-slate-600'}`
                                                             }`}
                                                     >
                                                         {format(day, 'd')}
@@ -463,8 +475,8 @@ export default function MemberPage() {
 
                                 {leaveType === '연차' && leaveSubtype === '기간' && (
                                     <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-                                        <label className="block text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider ml-1">종료 일자</label>
-                                        <div className="bg-slate-50 rounded-2xl p-3 border-2 border-slate-100 text-slate-800">
+                                        <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider ml-1">종료 일자</label>
+                                        <div className="bg-slate-50 rounded-2xl p-2.5 border-2 border-slate-100 text-slate-800">
                                             {/* Year / Month selectors */}
                                             <div className="flex items-center gap-2 mb-2">
                                                 <select
@@ -490,7 +502,7 @@ export default function MemberPage() {
                                             {/* Day grid */}
                                             <div className="grid grid-cols-7 gap-0.5 text-center mb-1">
                                                 {['일', '월', '화', '수', '목', '금', '토'].map((d, i) => (
-                                                    <span key={d} className={`text-[9px] font-bold ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-slate-300'}`}>{d}</span>
+                                                    <span key={d} className={`text-[10px] font-black ${i === 0 ? 'text-red-700' : i === 6 ? 'text-blue-700' : 'text-slate-700'}`}>{d}</span>
                                                 ))}
                                             </div>
                                             <div className="grid grid-cols-7 gap-0.5">
@@ -506,20 +518,20 @@ export default function MemberPage() {
                                                     const isStart = dayStr === startDate;
                                                     const dayOfWeek = day.getDay();
                                                     const isHoliday = isKoreanHoliday(dayStr);
-                                                    const isDisabled = dayOfWeek === 0 || dayOfWeek === 6 || isHoliday;
+                                                    const isDisabled = dayOfWeek === 0 || dayOfWeek === 6;
                                                     return (
                                                         <button
                                                             key={dayStr}
                                                             type="button"
                                                             disabled={isDisabled}
                                                             onClick={() => setEndDate(dayStr)}
-                                                            className={`h-8 text-xs font-bold rounded-lg transition-all ${isSelected
+                                                            className={`h-8 text-xs font-black rounded-lg transition-all ${isSelected
                                                                 ? 'bg-blue-600 text-white shadow-md shadow-blue-200 scale-105 font-black'
                                                                 : isDisabled
-                                                                    ? `opacity-30 cursor-not-allowed ${dayOfWeek === 0 || isHoliday ? 'text-red-500' : 'text-blue-500'}`
+                                                                    ? `opacity-50 cursor-not-allowed ${dayOfWeek === 0 || isHoliday ? 'text-red-500' : 'text-blue-500'}`
                                                                     : isStart
                                                                         ? 'bg-blue-100 text-blue-600'
-                                                                        : `hover:bg-white text-slate-600`
+                                                                        : `hover:bg-white ${isHoliday ? 'text-red-500' : 'text-slate-600'}`
                                                                 }`}
                                                         >
                                                             {format(day, 'd')}

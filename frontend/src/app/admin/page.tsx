@@ -95,12 +95,15 @@ export default function AdminPage() {
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-6">
                                 <div>
-                                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">{format(currentMonth, 'MMMM yyyy', { locale: ko })}</h2>
+                                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+                                        <span className="text-slate-500 mr-2">{format(currentMonth, 'yyyy년')}</span>
+                                        <span className="text-5xl">{format(currentMonth, 'M월')}</span>
+                                    </h2>
                                     <p className="text-sm font-medium text-slate-400 mt-1">팀원들의 휴무 일정을 한눈에 확인하세요.</p>
                                 </div>
                                 <div className="flex gap-2 bg-slate-100/50 p-1 rounded-2xl border border-slate-200">
                                     <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2.5 bg-white text-slate-700 shadow-sm hover:text-blue-600 hover:shadow-md rounded-xl transition-all active:scale-90"><ChevronLeft className="w-5 h-5" /></button>
-                                    <button onClick={() => setCurrentMonth(new Date())} className="px-5 text-sm font-bold text-slate-600 hover:text-blue-600 hover:bg-white rounded-xl transition-all">Today</button>
+                                    <button onClick={() => setCurrentMonth(new Date())} className="px-5 text-sm font-bold text-slate-600 hover:text-blue-600 hover:bg-white rounded-xl transition-all">오늘</button>
                                     <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2.5 bg-white text-slate-700 shadow-sm hover:text-blue-600 hover:shadow-md rounded-xl transition-all active:scale-90"><ChevronRight className="w-5 h-5" /></button>
                                 </div>
                             </div>
@@ -154,6 +157,7 @@ export default function AdminPage() {
                                                         case '연차': return 'bg-blue-50 text-blue-700 border-blue-100';
                                                         case '반차': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
                                                         case '대체휴무': return 'bg-amber-50 text-amber-700 border-amber-100';
+                                                        case '공휴일': return 'bg-red-50 text-red-700 border-red-100';
                                                         default: return 'bg-slate-50 text-slate-700 border-slate-100';
                                                     }
                                                 };
@@ -206,7 +210,8 @@ export default function AdminPage() {
                                         <span className={`inline-block px-2.5 py-1 text-[10px] font-black rounded-lg ${l.leave_type === '연차' ? 'bg-blue-100 text-blue-700' :
                                             l.leave_type === '반차' ? 'bg-green-100 text-green-700' :
                                                 l.leave_type === '대체휴무' ? 'bg-amber-100 text-amber-700' :
-                                                    'bg-slate-100 text-slate-700'
+                                                    l.leave_type === '공휴일' ? 'bg-red-100 text-red-700' :
+                                                        'bg-slate-100 text-slate-700'
                                             }`}>
                                             {l.leave_type}
                                         </span>
