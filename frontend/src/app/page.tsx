@@ -59,7 +59,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-start justify-center bg-transparent p-4 pt-[2vh] sm:pt-[6vh]">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden">
+      <div className="w-full max-w-md bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border border-white/20">
         <div className="px-8 pt-5 pb-4">
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="w-10 h-10 flex items-center justify-center shrink-0 drop-shadow-md">

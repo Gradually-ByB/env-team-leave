@@ -100,7 +100,7 @@ export default function MemberPage() {
     return (
         <div className="min-h-screen bg-transparent pb-24">
             {/* Header */}
-            <header className="bg-white px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-10">
+            <header className="bg-white/80 backdrop-blur-md px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-20 border-b border-white/10">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
                         {user?.name[0]}
@@ -117,7 +117,7 @@ export default function MemberPage() {
 
             <main className="p-4 space-y-6">
                 {/* Calendar Section */}
-                <section className="bg-white rounded-3xl p-6 shadow-sm">
+                <section className="bg-white/90 backdrop-blur-md rounded-3xl p-6 shadow-2xl border border-white/20">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                             <CalendarIcon className="w-5 h-5 text-blue-600" />
@@ -221,7 +221,7 @@ export default function MemberPage() {
                             };
 
                             return (
-                                <div key={leave.id} className={`bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between border-l-4 ${isToday ? 'border-blue-500 shadow-md' : 'border-slate-100'}`}>
+                                <div key={leave.id} className={`bg-white/90 backdrop-blur-sm p-4 rounded-2xl shadow-xl flex items-center justify-between border-l-4 ${isToday ? 'border-blue-500 shadow-md' : 'border-white/20'}`}>
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${getLeaveColor(leave.leave_type, isToday)}`}>
@@ -259,7 +259,7 @@ export default function MemberPage() {
                         <Users className="w-5 h-5 text-blue-600" />
                         팀원 휴무
                     </h2>
-                    <div className="bg-white p-5 rounded-3xl shadow-sm space-y-4">
+                    <div className="bg-white/90 backdrop-blur-md p-5 rounded-3xl shadow-2xl border border-white/20 space-y-4">
                         {(() => {
                             const today = new Date();
                             const weekStart = startOfWeek(today, { locale: ko });
