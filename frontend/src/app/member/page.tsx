@@ -304,12 +304,12 @@ export default function MemberPage() {
                                         if (dayLeaves.length === 0 && (day.getDay() === 0 || day.getDay() === 6)) return null;
 
                                         return (
-                                            <div key={dayStr} className={`flex items-start gap-3 ${isToday(day) ? 'bg-blue-50/50 -mx-2 px-2 py-2 rounded-xl' : ''}`}>
+                                            <div key={dayStr} className={`flex items-start gap-3 border-b border-dotted border-slate-400 pb-4 last:border-0 ${isToday(day) ? 'bg-blue-50/50 -mx-2 px-2 py-4 rounded-xl' : ''}`}>
                                                 <div className="flex flex-col items-center min-w-[45px] pt-0.5">
-                                                    <span className={`text-[10px] font-bold ${day.getDay() === 0 || isKoreanHoliday(dayStr) ? 'text-red-500' : day.getDay() === 6 ? 'text-blue-500' : 'text-slate-400'}`}>
+                                                    <span className={`text-[10px] font-bold ${day.getDay() === 0 || isKoreanHoliday(dayStr) ? 'text-red-700 transition-colors' : day.getDay() === 6 ? 'text-blue-700 transition-colors' : 'text-slate-800'}`}>
                                                         {format(day, 'eee', { locale: ko })}
                                                     </span>
-                                                    <span className={`text-sm font-black ${isToday(day) ? 'text-blue-600' : 'text-slate-700'}`}>
+                                                    <span className={`text-base font-semibold leading-none mt-0.5 ${isToday(day) ? 'text-blue-600' : 'text-slate-900'}`}>
                                                         {format(day, 'dd')}
                                                     </span>
                                                 </div>
@@ -353,7 +353,7 @@ export default function MemberPage() {
                     <div className="w-full max-w-lg bg-white rounded-t-[40px] sm:rounded-3xl p-6 animate-in slide-in-from-bottom duration-300">
                         <div className="flex justify-between items-center mb-5">
                             <h2 className="text-xl font-black text-slate-800">휴무 등록</h2>
-                            <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600 font-bold p-1">Close</button>
+                            <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600 font-bold p-1">닫기</button>
                         </div>
 
                         <form onSubmit={handleRegister} className="space-y-4">
