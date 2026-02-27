@@ -98,18 +98,18 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <div className="space-y-4 max-h-[400px] overflow-y-auto p-2 bg-slate-50 rounded-2xl border border-slate-100 scrollbar-hide">
+              <div className="space-y-2 max-h-[500px] overflow-y-auto p-2 bg-slate-50 rounded-2xl border border-slate-100 scrollbar-hide">
                 {/* 관리자 섹션 */}
                 {users.some(u => u.role === 'admin') && (
                   <div>
-                    <label className="block text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-2 ml-1">관리자</label>
-                    <div className="grid grid-cols-4 gap-2">
+                    <label className="block text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1 ml-1">관리자</label>
+                    <div className="grid grid-cols-5 gap-1">
                       {users.filter(u => u.role === 'admin').map((u) => (
                         <button
                           key={u.id}
                           type="button"
                           onClick={() => setSelectedName(u.name)}
-                          className={`h-11 rounded-xl text-base font-bold transition-all ${selectedName === u.name
+                          className={`h-9 rounded-lg text-sm font-bold transition-all ${selectedName === u.name
                             ? 'bg-blue-600 text-white shadow-md shadow-blue-200 scale-95'
                             : 'bg-white text-slate-800 hover:bg-white hover:shadow-sm border border-slate-200'
                             }`}
@@ -123,14 +123,14 @@ export default function LoginPage() {
 
                 {/* 팀원 섹션 */}
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">팀원</label>
-                  <div className="grid grid-cols-4 gap-2">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 ml-1">팀원</label>
+                  <div className="grid grid-cols-5 gap-1">
                     {users.filter(u => u.role === 'member').map((u) => (
                       <button
                         key={u.id}
                         type="button"
                         onClick={() => setSelectedName(u.name)}
-                        className={`h-11 rounded-xl text-base font-bold transition-all ${selectedName === u.name
+                        className={`h-9 rounded-lg text-sm font-bold transition-all ${selectedName === u.name
                           ? 'bg-blue-600 text-white shadow-md shadow-blue-200 scale-95'
                           : 'bg-white text-slate-600 hover:bg-white hover:shadow-sm border border-slate-100'
                           }`}
