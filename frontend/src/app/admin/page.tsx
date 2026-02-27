@@ -92,10 +92,10 @@ export default function AdminPage() {
                 </div>
 
                 <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-4 py-2 px-6 bg-slate-50/50 rounded-2xl border border-slate-100">
+                    <div className="flex items-center gap-3 py-1 px-4 bg-slate-50/50 rounded-xl border border-slate-100">
                         <div className="text-right">
-                            <p className="text-xs font-medium text-slate-400 leading-tight">접속 중인 관리자</p>
-                            <p className="text-sm font-bold text-slate-800">{user?.name}</p>
+                            <p className="text-[10px] font-medium text-slate-400 leading-tight">접속 중인 관리자</p>
+                            <p className="text-xs font-bold text-slate-800">{user?.name}</p>
                         </div>
                     </div>
                     <button
