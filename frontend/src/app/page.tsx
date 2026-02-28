@@ -68,7 +68,7 @@ export default function LoginPage() {
             <h1 className="text-xl font-bold text-slate-800 tracking-tight">환경팀 휴무일정</h1>
           </div>
 
-          <div className="mb-6 p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50">
+          <div className="mb-6 p-4 bg-blue-100/90 rounded-2xl border border-blue-200/60">
             <div className="flex items-center gap-2 mb-3 px-1">
               <CalendarIcon className="w-4 h-4 text-blue-600" />
               <h2 className="text-sm font-bold text-blue-800">오늘의 휴무자 {todayLeaves.length > 0 ? `(${todayLeaves.length})` : ''}</h2>
