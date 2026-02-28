@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import Image from 'next/image';
-import { Lock, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 
 interface UserOption {
   id: number;
@@ -59,8 +59,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-transparent p-4">
-      <div className="w-full max-w-md bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-        <div className="px-8 pt-5 pb-4">
+      <div className="w-full max-w-[380px] bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+        <div className="px-4 pt-5 pb-4">
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="w-10 h-10 flex items-center justify-center shrink-0 drop-shadow-md">
               <Image src="/logo.png" alt="환경팀 로고" width={40} height={40} className="object-contain" priority />
