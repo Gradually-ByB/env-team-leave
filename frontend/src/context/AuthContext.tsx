@@ -29,6 +29,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const token = Cookies.get('env_team_token');
         if (storedUser && token) {
             try {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setUser(JSON.parse(storedUser));
             } catch (e) {
                 console.error('Failed to parse user cookie', e);

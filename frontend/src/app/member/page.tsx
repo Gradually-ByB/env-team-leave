@@ -52,6 +52,7 @@ export default function MemberPage() {
     const [monthLeaves, setMonthLeaves] = useState<Leave[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [leaveToDelete, setLeaveToDelete] = useState<number | null>(null);
+    const [selectedDateLeaves, setSelectedDateLeaves] = useState<{ date: string, leaves: Leave[] } | null>(null);
 
     // Form State
     const [leaveType, setLeaveType] = useState('연차');
@@ -216,10 +217,16 @@ export default function MemberPage() {
                             });
 
                             return (
-                                <div
+                                <button
                                     key={dayStr}
-                                    className={`relative h-12 flex flex-col items-center justify-center rounded-xl transition-all ${isToday(day) ? 'ring-1 ring-blue-400' : ''
-                                        } ${userLeave ? `${getLeaveBgColor(userLeave.leave_type)} shadow-md` : 'hover:bg-slate-100'}`}
+                                    type="button"
+                                    onClick={() => {
+                                        if (teamMembersOnLeave.length > 0) {
+                                            setSelectedDateLeaves({ date: dayStr, leaves: teamMembersOnLeave });
+                                        }
+                                    }}
+                                    className={`relative h-12 w-full flex flex-col items-center justify-center rounded-xl transition-all ${isToday(day) ? 'ring-1 ring-blue-400' : ''
+                                        } ${userLeave ? `${getLeaveBgColor(userLeave.leave_type)} shadow-md` : 'hover:bg-slate-100'} ${(teamMembersOnLeave.length > 0) ? 'cursor-pointer active:scale-95' : 'cursor-default'}`}
                                 >
                                     <span className={`text-sm font-bold ${!userLeave && (day.getDay() === 0 || isKoreanHoliday(dayStr) ? 'text-red-500' : day.getDay() === 6 ? 'text-blue-500' : 'text-slate-700')}`}>
                                         {format(day, 'd')}
@@ -229,9 +236,12 @@ export default function MemberPage() {
                                             {teamMembersOnLeave.slice(0, 3).map((l, i) => (
                                                 <div key={i} className={`w-1.5 h-1.5 rounded-full ${getDotColor(l.leave_type)}`} />
                                             ))}
+                                            {teamMembersOnLeave.length > 3 && (
+                                                <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                            )}
                                         </div>
                                     )}
-                                </div>
+                                </button>
                             );
                         })}
                     </div>
@@ -574,6 +584,34 @@ export default function MemberPage() {
                             >
                                 삭제하기
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Team Leaves Popup Modal */}
+            {selectedDateLeaves && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={(e) => {
+                    if (e.target === e.currentTarget) setSelectedDateLeaves(null);
+                }}>
+                    <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl transition-all animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-black text-slate-800">
+                                {format(new Date(selectedDateLeaves.date), 'M월 d일')} 휴무자
+                            </h3>
+                            <button onClick={() => setSelectedDateLeaves(null)} className="text-slate-400 hover:text-slate-600 font-bold p-1">닫기</button>
+                        </div>
+                        <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                            {selectedDateLeaves.leaves.map(leave => (
+                                <div key={leave.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                    <div className="flex flex-col">
+                                        <span className="text-base font-bold text-slate-800">{leave.user_name}</span>
+                                    </div>
+                                    <span className={`text-[10px] font-extrabold px-2 py-1 rounded-md ${getLeaveBgColor(leave.leave_type)}`}>
+                                        {leave.leave_type} {leave.leave_subtype !== '종일' && leave.leave_subtype !== '기간' && leave.leave_subtype !== '일반' ? `(${leave.leave_subtype})` : ''}
+                                    </span>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>

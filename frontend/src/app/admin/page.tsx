@@ -70,6 +70,7 @@ export default function AdminPage() {
     }, [user]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchSummaryLeaves();
         const interval = setInterval(fetchSummaryLeaves, 10000);
         return () => clearInterval(interval);
@@ -86,6 +87,7 @@ export default function AdminPage() {
     }, [currentMonth, user]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchLeaves();
 
         // 10초마다 자동 새로고침 (Polling)
@@ -116,8 +118,6 @@ export default function AdminPage() {
             return isWeekday && dayStr >= start && dayStr <= end;
         });
     };
-
-    const selectedDayLeaves = selectedDay ? getDayLeaves(selectedDay) : [];
 
     return (
         <div className="min-h-screen bg-transparent flex flex-col">
