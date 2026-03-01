@@ -92,17 +92,22 @@ app.get('/api/leaves/today', async (req, res) => {
     }
 });
 
-// Get leaves by month (for calendar)
+// Get leaves by month (for calendar), or all leaves if month query is not provided
 app.get('/api/leaves', authenticateToken, async (req, res) => {
     const { month } = req.query; // YYYY-MM
     try {
-        const query = `
+        let query = `
       SELECT l.*, u.name as user_name, u.role as user_role, u.job_role as user_job_role
       FROM leaves l
       JOIN users u ON l.user_id = u.id
-      WHERE (start_date < (($1 || '-01')::DATE + INTERVAL '1 month') AND end_date >= ($1 || '-01')::DATE)
     `;
-        const result = await pool.query(query, [month]);
+        let params = [];
+        if (month) {
+            query += ` WHERE (start_date < (($1 || '-01')::DATE + INTERVAL '1 month') AND end_date >= ($1 || '-01')::DATE)`;
+            params.push(month);
+        }
+
+        const result = await pool.query(query, params);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });

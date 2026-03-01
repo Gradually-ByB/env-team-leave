@@ -231,13 +231,13 @@ export default function MemberPage() {
                                     <span className={`text-sm font-bold ${!userLeave && (day.getDay() === 0 || isKoreanHoliday(dayStr) ? 'text-red-500' : day.getDay() === 6 ? 'text-blue-500' : 'text-slate-700')}`}>
                                         {format(day, 'd')}
                                     </span>
-                                    {teamMembersOnLeave.length > 0 && !userLeave && (
+                                    {teamMembersOnLeave.length > 0 && (
                                         <div className="flex gap-0.5 mt-0.5">
                                             {teamMembersOnLeave.slice(0, 3).map((l, i) => (
-                                                <div key={i} className={`w-1.5 h-1.5 rounded-full ${getDotColor(l.leave_type)}`} />
+                                                <div key={i} className={`w-1.5 h-1.5 rounded-full ${userLeave ? 'bg-white/90' : getDotColor(l.leave_type)}`} />
                                             ))}
                                             {teamMembersOnLeave.length > 3 && (
-                                                <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                                <div className={`w-1.5 h-1.5 rounded-full ${userLeave ? 'bg-white/90' : 'bg-slate-400'}`} />
                                             )}
                                         </div>
                                     )}

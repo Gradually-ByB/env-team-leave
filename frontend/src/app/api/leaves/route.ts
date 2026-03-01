@@ -2,25 +2,42 @@ import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 
-// GET /api/leaves?month=YYYY-MM - 월별 휴무 목록 (달력용)
+// GET /api/leaves?month=YYYY-MM - 월별 휴무 목록 (달력용), month 없으면 전체 반환
 export async function GET(req: NextRequest) {
     const user = verifyToken(req);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
-    const month = searchParams.get('month'); // YYYY-MM
+    const month = searchParams.get('month'); // YYYY-MM (optional)
 
     try {
-        const query = `
-            SELECT 
-                l.id, l.user_id, l.leave_type, l.leave_subtype, 
-                l.start_date, l.end_date, l.created_at,
-                u.name as user_name, u.role as user_role, u.job_role as user_job_role
-            FROM leaves l
-            JOIN users u ON l.user_id = u.id
-            WHERE (l.start_date < (($1 || '-01')::DATE + INTERVAL '1 month') AND l.end_date >= ($1 || '-01')::DATE)
-        `;
-        const result = await pool.query(query, [month]);
+        let query: string;
+        let params: string[];
+
+        if (month) {
+            query = `
+                SELECT 
+                    l.id, l.user_id, l.leave_type, l.leave_subtype, 
+                    l.start_date, l.end_date, l.created_at,
+                    u.name as user_name, u.role as user_role, u.job_role as user_job_role
+                FROM leaves l
+                JOIN users u ON l.user_id = u.id
+                WHERE (l.start_date < (($1 || '-01')::DATE + INTERVAL '1 month') AND l.end_date >= ($1 || '-01')::DATE)
+            `;
+            params = [month];
+        } else {
+            query = `
+                SELECT 
+                    l.id, l.user_id, l.leave_type, l.leave_subtype, 
+                    l.start_date, l.end_date, l.created_at,
+                    u.name as user_name, u.role as user_role, u.job_role as user_job_role
+                FROM leaves l
+                JOIN users u ON l.user_id = u.id
+            `;
+            params = [];
+        }
+
+        const result = await pool.query(query, params);
         return NextResponse.json(result.rows);
     } catch (err) {
         return NextResponse.json({ error: String(err) }, { status: 500 });

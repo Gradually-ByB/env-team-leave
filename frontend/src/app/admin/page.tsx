@@ -56,8 +56,8 @@ export default function AdminPage() {
                 if (isWeekend) return []; // 주말이면 아예 빈 배열 반환
 
                 return allLeaves.filter((l: Leave) => {
-                    const start = l.start_date.split('T')[0];
-                    const end = l.end_date.split('T')[0];
+                    const start = format(new Date(l.start_date), 'yyyy-MM-dd');
+                    const end = format(new Date(l.end_date), 'yyyy-MM-dd');
                     return dayStr >= start && dayStr <= end;
                 });
             };
@@ -79,12 +79,13 @@ export default function AdminPage() {
     const fetchLeaves = React.useCallback(async () => {
         if (!user || user.role !== 'admin') return;
         try {
-            const response = await api.get(`/leaves?month=${format(currentMonth, 'yyyy-MM')}`);
+            // 모든 휴무를 다 가져온다. (달력에서 월을 바꿔도 데이터가 모두 표시되도록)
+            const response = await api.get('/leaves');
             setLeaves(response.data);
         } catch (err) {
             console.error('Failed to fetch leaves', err);
         }
-    }, [currentMonth, user]);
+    }, [user]);
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -112,8 +113,8 @@ export default function AdminPage() {
     const getDayLeaves = (day: Date) => {
         const dayStr = format(day, 'yyyy-MM-dd');
         return leaves.filter(l => {
-            const start = l.start_date.split('T')[0];
-            const end = l.end_date.split('T')[0];
+            const start = format(new Date(l.start_date), 'yyyy-MM-dd');
+            const end = format(new Date(l.end_date), 'yyyy-MM-dd');
             const isWeekday = day.getDay() !== 0 && day.getDay() !== 6;
             return isWeekday && dayStr >= start && dayStr <= end;
         });
@@ -271,7 +272,7 @@ export default function AdminPage() {
                                         <p className="text-xs text-slate-400 font-bold">주말은 휴무자가 없습니다.</p>
                                     </div>
                                 ) : todayLeaves.length > 0 ? todayLeaves.map((l, i) => (
-                                    <div key={i} className="group relative flex flex-col gap-3 p-4 bg-white hover:bg-blue-50/30 rounded-2xl transition-all border border-slate-100 hover:border-blue-100 shadow-sm">
+                                    <div key={i} className="group relative flex flex-col gap-1.5 p-2.5 bg-white hover:bg-blue-50/30 rounded-2xl transition-all border border-slate-100 hover:border-blue-100 shadow-sm">
                                         <div className="flex items-start justify-between">
                                             <div className="flex items-center gap-3">
                                                 <div>
@@ -288,7 +289,7 @@ export default function AdminPage() {
                                                 {l.leave_type}
                                             </span>
                                         </div>
-                                        <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                                        <div className="flex items-center justify-between pt-1.5 border-t border-slate-50">
                                             <div className="flex items-center gap-1.5 text-slate-400">
                                                 <Info className="w-3 h-3" />
                                                 <span className="text-[10px] font-bold text-slate-500">{l.leave_subtype}</span>
@@ -333,7 +334,7 @@ export default function AdminPage() {
                                         <p className="text-xs text-slate-400 font-bold">주말은 휴무자가 없습니다.</p>
                                     </div>
                                 ) : tomorrowLeaves.length > 0 ? tomorrowLeaves.map((l, i) => (
-                                    <div key={i} className="group relative flex flex-col gap-3 p-4 bg-white hover:bg-slate-50/80 rounded-2xl transition-all border border-slate-100 hover:border-slate-200 shadow-sm">
+                                    <div key={i} className="group relative flex flex-col gap-1.5 p-2.5 bg-white hover:bg-slate-50/80 rounded-2xl transition-all border border-slate-100 hover:border-slate-200 shadow-sm">
                                         <div className="flex items-start justify-between">
                                             <div className="flex items-center gap-3">
                                                 <div>
@@ -350,7 +351,7 @@ export default function AdminPage() {
                                                 {l.leave_type}
                                             </span>
                                         </div>
-                                        <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                                        <div className="flex items-center justify-between pt-1.5 border-t border-slate-50">
                                             <div className="flex items-center gap-1.5 text-slate-400">
                                                 <Info className="w-3 h-3" />
                                                 <span className="text-[10px] font-bold text-slate-500">{l.leave_subtype}</span>
