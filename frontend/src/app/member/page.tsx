@@ -509,8 +509,8 @@ export default function MemberPage() {
                             <div className="space-y-6">
                                 <div className="space-y-4">
                                     <div>
-                                        <div className="flex flex-col items-center mb-6 py-4 px-6 bg-lime-50 rounded-2xl border border-lime-100 shadow-sm">
-                                            <p className="text-sm font-black text-lime-700 mb-2">
+                                        <div className="flex flex-col items-center mb-4 py-2 px-6 bg-lime-50 rounded-2xl border border-lime-100 shadow-sm">
+                                            <p className="text-sm font-black text-lime-700 mb-1">
                                                 {leaveType === '연차' && leaveSubtype === '기간'
                                                     ? (!startDate ? '시작일을 선택하세요' : !endDate ? '종료일을 선택하세요' : '기간이 선택되었습니다')
                                                     : '선택된 날짜'}
