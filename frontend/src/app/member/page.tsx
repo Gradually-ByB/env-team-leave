@@ -526,8 +526,8 @@ export default function MemberPage() {
                                             </div>
                                         </div>
 
-                                        <div className="bg-slate-50 rounded-2xl p-3 border-2 border-slate-100">
-                                            <div className="flex items-center gap-2 mb-3">
+                                        <div className="bg-slate-50 rounded-2xl p-2 border-2 border-slate-100">
+                                            <div className="flex items-center gap-2 mb-2">
                                                 <select
                                                     value={startViewYear}
                                                     onChange={e => setStartViewYear(Number(e.target.value))}
@@ -556,7 +556,7 @@ export default function MemberPage() {
 
                                             <div className="grid grid-cols-7 gap-0.5">
                                                 {Array.from({ length: new Date(startViewYear, startViewMonthNum, 1).getDay() }).map((_, i) => (
-                                                    <div key={i} className="h-9" />
+                                                    <div key={i} className="h-7" />
                                                 ))}
                                                 {eachDayOfInterval({
                                                     start: new Date(startViewYear, startViewMonthNum, 1),
@@ -576,7 +576,7 @@ export default function MemberPage() {
                                                             type="button"
                                                             disabled={isDisabled}
                                                             onClick={() => handleFormDateClick(dayStr)}
-                                                            className={`h-9 text-xs font-black transition-all relative ${isStart || isEnd
+                                                            className={`h-7 text-xs font-black transition-all relative ${isStart || isEnd
                                                                 ? 'bg-blue-600 text-white z-10 rounded-lg shadow-md shadow-blue-200'
                                                                 : isRange
                                                                     ? 'bg-blue-50 text-blue-600'
