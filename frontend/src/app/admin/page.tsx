@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isSameDay, isToday, addDays } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isSameDay, isToday } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { LogOut, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { getHolidayName } from '@/lib/koreanHolidays';
@@ -32,49 +32,6 @@ export default function AdminPage() {
             router.push('/');
         }
     }, [user, loading, router]);
-
-    const [todayLeaves, setTodayLeaves] = useState<Leave[]>([]);
-    const [tomorrowLeaves, setTomorrowLeaves] = useState<Leave[]>([]);
-
-    const fetchSummaryLeaves = React.useCallback(async () => {
-        if (!user || user.role !== 'admin') return;
-        try {
-            const today = new Date();
-            const tomorrow = addDays(today, 1);
-
-            // 현재 달과 다음 달의 데이터를 모두 가져와서 오늘/내일 필터링
-            const month1 = format(today, 'yyyy-MM');
-            const month2 = format(tomorrow, 'yyyy-MM');
-
-            const months = Array.from(new Set([month1, month2]));
-            const responses = await Promise.all(months.map(m => api.get(`/leaves?month=${m}`)));
-            const allLeaves = responses.flatMap(r => r.data);
-
-            const filterForDay = (day: Date) => {
-                const dayStr = format(day, 'yyyy-MM-dd');
-                const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-                if (isWeekend) return []; // 주말이면 아예 빈 배열 반환
-
-                return allLeaves.filter((l: Leave) => {
-                    const start = format(new Date(l.start_date), 'yyyy-MM-dd');
-                    const end = format(new Date(l.end_date), 'yyyy-MM-dd');
-                    return dayStr >= start && dayStr <= end;
-                });
-            };
-
-            setTodayLeaves(filterForDay(today));
-            setTomorrowLeaves(filterForDay(tomorrow));
-        } catch (err) {
-            console.error('Failed to fetch summary leaves', err);
-        }
-    }, [user]);
-
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        fetchSummaryLeaves();
-        const interval = setInterval(fetchSummaryLeaves, 10000);
-        return () => clearInterval(interval);
-    }, [fetchSummaryLeaves]);
 
     const fetchLeaves = React.useCallback(async () => {
         if (!user || user.role !== 'admin') return;
@@ -227,8 +184,11 @@ export default function AdminPage() {
                                                     }
                                                 };
                                                 return (
-                                                    <div key={i} className={`px-2 py-0.5 border rounded-lg text-[10px] font-bold truncate transition-transform hover:scale-[1.02] ${getCalendarColor(l.leave_type)}`}>
+                                                    <div key={i} className={`px-2 py-0.5 border rounded-lg text-[10px] font-bold truncate transition-transform hover:scale-[1.02] ${getCalendarColor(l.leave_type)}`} title={`${l.user_name}: ${l.leave_subtype}`}>
                                                         {l.user_name}
+                                                        {l.leave_subtype && (l.leave_type === '대체휴무' || l.leave_type === '반차') && (
+                                                            <span className="ml-1 opacity-70 font-medium text-[9px]">({l.leave_subtype})</span>
+                                                        )}
                                                     </div>
                                                 );
                                             })}
@@ -251,36 +211,47 @@ export default function AdminPage() {
                 {/* Right Component: Daily Summary & Stats */}
                 <aside className="space-y-8 flex flex-col h-full overflow-hidden">
                     <div className="bg-white/90 backdrop-blur-md rounded-4xl p-8 shadow-2xl border border-white/20 flex-1 flex flex-col overflow-hidden">
-                        {/* Today Section */}
                         <div className="flex-1 flex flex-col min-h-0">
-                            <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center justify-between mb-8">
                                 <div className="flex flex-col gap-1">
-                                    <h3 className="text-xl font-black text-slate-800">오늘의 휴무자</h3>
+                                    <h3 className="text-2xl font-black text-slate-800">
+                                        {selectedDay ? (
+                                            isToday(selectedDay) ? '오늘의 휴무자' : `${format(selectedDay, 'M월 d일')} 휴무자`
+                                        ) : '휴무자 정보'}
+                                    </h3>
+                                    <p className="text-sm font-medium text-slate-400">선택된 날짜의 상세 휴무 현황입니다.</p>
                                 </div>
-                                <div className="px-3 py-1.5 bg-blue-50 rounded-xl flex items-center gap-2 border border-blue-100">
-                                    <CalendarIcon className="w-3.5 h-3.5 text-blue-500" />
-                                    <span className="text-[11px] font-bold text-blue-700 leading-none pb-0.5">{format(new Date(), 'MM.dd(EEE)', { locale: ko })}</span>
-                                </div>
+                                {selectedDay && (
+                                    <div className={`px-4 py-2 rounded-2xl flex items-center gap-2 border ${isToday(selectedDay) ? 'bg-blue-50 border-blue-100' : 'bg-slate-50 border-slate-100'}`}>
+                                        <CalendarIcon className={`w-4 h-4 ${isToday(selectedDay) ? 'text-blue-500' : 'text-slate-500'}`} />
+                                        <span className={`text-xs font-bold ${isToday(selectedDay) ? 'text-blue-700' : 'text-slate-700'}`}>
+                                            {format(selectedDay, 'MM.dd(EEE)', { locale: ko })}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide space-y-3">
-                                {new Date().getDay() === 0 || new Date().getDay() === 6 ? (
-                                    <div className="h-full flex flex-col items-center justify-center text-center py-8 opacity-60">
-                                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
-                                            <CalendarIcon className="w-6 h-6 text-slate-300" />
+                            <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide space-y-4">
+                                {selectedDay && (selectedDay.getDay() === 0 || selectedDay.getDay() === 6) ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-center py-12 opacity-60">
+                                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                            <CalendarIcon className="w-8 h-8 text-slate-300" />
                                         </div>
-                                        <p className="text-xs text-slate-400 font-bold">주말은 휴무자가 없습니다.</p>
+                                        <p className="text-sm text-slate-400 font-bold">주말은 휴무자가 없습니다.</p>
                                     </div>
-                                ) : todayLeaves.length > 0 ? todayLeaves.map((l, i) => (
-                                    <div key={i} className="group relative flex flex-col gap-1.5 p-2.5 bg-white hover:bg-blue-50/30 rounded-2xl transition-all border border-slate-100 hover:border-blue-100 shadow-sm">
+                                ) : selectedDay && getDayLeaves(selectedDay).length > 0 ? getDayLeaves(selectedDay).map((l, i) => (
+                                    <div key={i} className="group relative flex flex-col gap-3 p-5 bg-white hover:bg-blue-50/30 rounded-3xl transition-all border border-slate-100 hover:border-blue-100 shadow-sm">
                                         <div className="flex items-start justify-between">
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 font-bold text-sm">
+                                                    {l.user_name[0]}
+                                                </div>
                                                 <div>
-                                                    <p className="text-sm font-bold text-slate-800">{l.user_name}</p>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{l.user_job_role}</p>
+                                                    <p className="text-base font-bold text-slate-800">{l.user_name}</p>
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-tight">{l.user_job_role}</p>
                                                 </div>
                                             </div>
-                                            <span className={`inline-block px-2 py-0.5 text-[9px] font-black rounded-md ${l.leave_type === '연차' ? 'bg-blue-100 text-blue-700' :
+                                            <span className={`inline-block px-3 py-1 text-[10px] font-black rounded-lg ${l.leave_type === '연차' ? 'bg-blue-100 text-blue-700' :
                                                 l.leave_type === '반차' ? 'bg-green-100 text-green-700' :
                                                     l.leave_type === '대체휴무' ? 'bg-amber-100 text-amber-700' :
                                                         l.leave_type === '공휴일' ? 'bg-red-100 text-red-700' :
@@ -289,88 +260,39 @@ export default function AdminPage() {
                                                 {l.leave_type}
                                             </span>
                                         </div>
-                                        <div className="flex items-center justify-between pt-1.5 border-t border-slate-50">
-                                            <div className="flex items-center gap-1.5 text-slate-400">
-                                                <Info className="w-3 h-3" />
-                                                <span className="text-[10px] font-bold text-slate-500">{l.leave_subtype}</span>
+                                        <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+                                            <div className="flex items-center gap-2 text-slate-600">
+                                                <Info className="w-3.5 h-3.5 text-slate-400" />
+                                                <span className="text-xs font-bold">{l.leave_subtype || '상세내용 없음'}</span>
                                             </div>
                                             {l.leave_subtype === '기간' && (
-                                                <p className="text-[10px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                                                <p className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
                                                     {format(new Date(l.start_date), 'MM.dd')} - {format(new Date(l.end_date), 'MM.dd')}
                                                 </p>
                                             )}
                                         </div>
                                     </div>
                                 )) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-center py-8 opacity-60">
-                                        <Info className="w-8 h-8 text-slate-300 mb-2" />
-                                        <p className="text-xs text-slate-400 font-medium">오늘 휴무자가 없습니다.</p>
+                                    <div className="h-full flex flex-col items-center justify-center text-center py-12 opacity-60">
+                                        <Info className="w-12 h-12 text-slate-300 mb-4" />
+                                        <p className="text-sm text-slate-400 font-medium">휴무자가 없습니다.</p>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        {/* Divider */}
-                        <div className="h-px bg-slate-100 my-8 shadow-[0_1px_2px_rgba(0,0,0,0.02)]" />
-
-                        {/* Tomorrow Section */}
-                        <div className="flex-1 flex flex-col min-h-0">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex flex-col gap-1">
-                                    <h3 className="text-xl font-black text-slate-800">내일의 휴무자</h3>
-                                </div>
-                                <div className="px-3 py-1.5 bg-slate-100 rounded-xl flex items-center gap-2 border border-slate-200">
-                                    <CalendarIcon className="w-3.5 h-3.5 text-slate-500" />
-                                    <span className="text-[11px] font-bold text-slate-700 leading-none pb-0.5">{format(addDays(new Date(), 1), 'MM.dd(EEE)', { locale: ko })}</span>
-                                </div>
+                        {/* Summary Footer for Today/Tomorrow */}
+                        {!isToday(selectedDay!) && (
+                            <div className="mt-8 pt-6 border-t border-slate-100">
+                                <button
+                                    onClick={() => setSelectedDay(new Date())}
+                                    className="w-full py-3 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
+                                >
+                                    <CalendarIcon className="w-3.5 h-3.5" />
+                                    오늘의 휴무 현황으로 돌아가기
+                                </button>
                             </div>
-
-                            <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide space-y-3">
-                                {addDays(new Date(), 1).getDay() === 0 || addDays(new Date(), 1).getDay() === 6 ? (
-                                    <div className="h-full flex flex-col items-center justify-center text-center py-8 opacity-60">
-                                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
-                                            <CalendarIcon className="w-6 h-6 text-slate-300" />
-                                        </div>
-                                        <p className="text-xs text-slate-400 font-bold">주말은 휴무자가 없습니다.</p>
-                                    </div>
-                                ) : tomorrowLeaves.length > 0 ? tomorrowLeaves.map((l, i) => (
-                                    <div key={i} className="group relative flex flex-col gap-1.5 p-2.5 bg-white hover:bg-slate-50/80 rounded-2xl transition-all border border-slate-100 hover:border-slate-200 shadow-sm">
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div>
-                                                    <p className="text-sm font-bold text-slate-800">{l.user_name}</p>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{l.user_job_role}</p>
-                                                </div>
-                                            </div>
-                                            <span className={`inline-block px-2 py-0.5 text-[9px] font-black rounded-md ${l.leave_type === '연차' ? 'bg-blue-100 text-blue-700' :
-                                                l.leave_type === '반차' ? 'bg-green-100 text-green-700' :
-                                                    l.leave_type === '대체휴무' ? 'bg-amber-100 text-amber-700' :
-                                                        l.leave_type === '공휴일' ? 'bg-red-100 text-red-700' :
-                                                            'bg-slate-100 text-slate-700'
-                                                }`}>
-                                                {l.leave_type}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center justify-between pt-1.5 border-t border-slate-50">
-                                            <div className="flex items-center gap-1.5 text-slate-400">
-                                                <Info className="w-3 h-3" />
-                                                <span className="text-[10px] font-bold text-slate-500">{l.leave_subtype}</span>
-                                            </div>
-                                            {l.leave_subtype === '기간' && (
-                                                <p className="text-[10px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
-                                                    {format(new Date(l.start_date), 'MM.dd')} - {format(new Date(l.end_date), 'MM.dd')}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                )) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-center py-8 opacity-60">
-                                        <Info className="w-8 h-8 text-slate-300 mb-2" />
-                                        <p className="text-xs text-slate-400 font-medium">내일 휴무자가 없습니다.</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </aside>
             </main>

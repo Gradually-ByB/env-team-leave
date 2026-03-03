@@ -59,9 +59,21 @@ export default function MemberPage() {
     const [leaveSubtype, setLeaveSubtype] = useState('종일');
     const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+
     // Independent view month/year for date pickers
     const [startViewYear, setStartViewYear] = useState(new Date().getFullYear());
     const [startViewMonthNum, setStartViewMonthNum] = useState(new Date().getMonth());
+
+    const resetForm = React.useCallback(() => {
+        setLeaveType('연차');
+        setLeaveSubtype('종일');
+        const now = new Date();
+        const todayStr = format(now, 'yyyy-MM-dd');
+        setStartDate(todayStr);
+        setEndDate(todayStr);
+        setStartViewYear(now.getFullYear());
+        setStartViewMonthNum(now.getMonth());
+    }, []);
 
     const fetchData = React.useCallback(async () => {
         try {
@@ -86,9 +98,19 @@ export default function MemberPage() {
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!startDate) {
+            alert('시작일을 선택해주세요.');
+            return;
+        }
+
+        if (leaveType === '연차' && leaveSubtype === '기간' && !endDate) {
+            alert('종료일을 선택해주세요.');
+            return;
+        }
+
         // 주말 체크
         const start = new Date(startDate);
-        const end = new Date(endDate);
+        const end = new Date(endDate || startDate);
 
         if (isWeekend(start) || isWeekend(end)) {
             alert('토요일과 일요일은 휴무를 등록할 수 없습니다.');
@@ -96,17 +118,13 @@ export default function MemberPage() {
         }
 
         try {
-            if (leaveType === '연차' && leaveSubtype === '기간' && !endDate) {
-                alert('종료일을 선택해주세요.');
-                return;
-            }
-
             await api.post('/leaves', {
                 leave_type: leaveType,
                 leave_subtype: leaveSubtype,
                 start_date: startDate,
                 end_date: endDate || startDate,
             });
+            resetForm();
             setShowForm(false);
             fetchData();
         } catch {
@@ -390,7 +408,10 @@ export default function MemberPage() {
 
             {/* Floating Action Button */}
             <button
-                onClick={() => setShowForm(true)}
+                onClick={() => {
+                    resetForm();
+                    setShowForm(true);
+                }}
                 className="fixed bottom-6 right-6 h-14 w-auto px-5 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-20"
             >
                 <PlusCircle className="w-8 h-8" />
@@ -406,7 +427,10 @@ export default function MemberPage() {
                                 <h2 className="text-xl font-black text-slate-800">휴무 등록</h2>
                                 <p className="text-xs font-bold text-blue-600 mt-1">{user?.name}님으로 신청됩니다.</p>
                             </div>
-                            <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-slate-600 font-bold p-1">닫기</button>
+                            <button onClick={() => {
+                                setShowForm(false);
+                                resetForm();
+                            }} className="text-slate-400 hover:text-slate-600 font-bold p-1">닫기</button>
                         </div>
 
                         <form onSubmit={handleRegister} className="space-y-4">
@@ -422,7 +446,12 @@ export default function MemberPage() {
                                                     setLeaveType(type);
                                                     if (type === '연차') setLeaveSubtype('종일');
                                                     else if (type === '반차') setLeaveSubtype('오전');
+                                                    else if (type === '대체휴무') setLeaveSubtype('');
                                                     else setLeaveSubtype('일반');
+
+                                                    const todayStr = format(new Date(), 'yyyy-MM-dd');
+                                                    setStartDate(todayStr);
+                                                    setEndDate(todayStr);
                                                 }}
                                                 className={`py-1.5 rounded-lg text-xs font-black transition-all border-2 ${leaveType === type
                                                     ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100'
@@ -437,21 +466,41 @@ export default function MemberPage() {
 
                                 <div>
                                     <label className="block text-[10px] font-black text-slate-900 mb-2 uppercase tracking-wider ml-1">상세 구분</label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {(leaveType === '연차' ? ['종일', '기간'] :
-                                            leaveType === '반차' ? ['오전', '오후'] : ['일반']).map((subtype) => (
-                                                <button
-                                                    key={subtype}
-                                                    type="button"
-                                                    onClick={() => setLeaveSubtype(subtype)}
-                                                    className={`py-1.5 rounded-lg text-xs font-black transition-all border-2 ${leaveSubtype === subtype
-                                                        ? 'bg-blue-50 border-blue-600 text-blue-600'
-                                                        : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'
-                                                        }`}
-                                                >
-                                                    {subtype}
-                                                </button>
-                                            ))}
+                                    <div className={leaveType === '대체휴무' ? '' : "grid grid-cols-2 gap-2"}>
+                                        {leaveType === '대체휴무' ? (
+                                            <input
+                                                type="text"
+                                                value={leaveSubtype}
+                                                onChange={(e) => setLeaveSubtype(e.target.value)}
+                                                placeholder="메모를 입력하세요 (예: 3/1 대체)"
+                                                className="w-full h-9 px-3 bg-white border-2 border-slate-100 rounded-lg text-xs font-black focus:outline-none focus:border-blue-400 placeholder:text-slate-300 transition-all font-black text-slate-700"
+                                            />
+                                        ) : (
+                                            (leaveType === '연차' ? ['종일', '기간'] :
+                                                leaveType === '반차' ? ['오전', '오후'] : ['일반']).map((subtype) => (
+                                                    <button
+                                                        key={subtype}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setLeaveSubtype(subtype);
+                                                            if (subtype === '기간') {
+                                                                setStartDate('');
+                                                                setEndDate('');
+                                                            } else if (!startDate || !endDate) {
+                                                                const todayStr = format(new Date(), 'yyyy-MM-dd');
+                                                                setStartDate(todayStr);
+                                                                setEndDate(todayStr);
+                                                            }
+                                                        }}
+                                                        className={`py-1.5 rounded-lg text-xs font-black transition-all border-2 ${leaveSubtype === subtype
+                                                            ? 'bg-blue-50 border-blue-600 text-blue-600'
+                                                            : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'
+                                                            }`}
+                                                    >
+                                                        {subtype}
+                                                    </button>
+                                                ))
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -460,23 +509,20 @@ export default function MemberPage() {
                             <div className="space-y-6">
                                 <div className="space-y-4">
                                     <div>
-                                        <div className="flex justify-between items-end mb-2 px-1">
-                                            <label className="text-[10px] font-black text-slate-900 uppercase tracking-wider">신청 일자 선택</label>
-                                            <div className="text-right">
-                                                <p className="text-[10px] font-bold text-blue-600 mb-0.5">
-                                                    {leaveType === '연차' && leaveSubtype === '기간'
-                                                        ? (!startDate ? '시작일을 선택하세요' : !endDate ? '종료일을 선택하세요' : '범위가 선택되었습니다')
-                                                        : '날짜를 선택하세요'}
-                                                </p>
-                                                <div className="text-xs font-black text-slate-800 flex items-center gap-1">
-                                                    <span className={!startDate ? 'text-slate-300' : ''}>{startDate ? format(new Date(startDate), 'MM.dd') : '시작일'}</span>
-                                                    {leaveType === '연차' && leaveSubtype === '기간' && (
-                                                        <>
-                                                            <span className="text-slate-300">~</span>
-                                                            <span className={!endDate ? 'text-slate-300' : ''}>{endDate ? format(new Date(endDate), 'MM.dd') : '종료일'}</span>
-                                                        </>
-                                                    )}
-                                                </div>
+                                        <div className="flex flex-col items-center mb-6 py-4 px-6 bg-lime-50 rounded-2xl border border-lime-100 shadow-sm">
+                                            <p className="text-sm font-black text-lime-700 mb-2">
+                                                {leaveType === '연차' && leaveSubtype === '기간'
+                                                    ? (!startDate ? '시작일을 선택하세요' : !endDate ? '종료일을 선택하세요' : '기간이 선택되었습니다')
+                                                    : '선택된 날짜'}
+                                            </p>
+                                            <div className="text-2xl font-black text-slate-800 flex items-center justify-center gap-3">
+                                                <span className={!startDate ? 'text-slate-200' : ''}>{startDate ? format(new Date(startDate), 'MM.dd') : '00.00'}</span>
+                                                {leaveType === '연차' && leaveSubtype === '기간' && (
+                                                    <>
+                                                        <span className="text-slate-300 text-lg font-medium">~</span>
+                                                        <span className={!endDate ? 'text-slate-200' : ''}>{endDate ? format(new Date(endDate), 'MM.dd') : '00.00'}</span>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
 
