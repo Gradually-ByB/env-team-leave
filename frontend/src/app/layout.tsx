@@ -16,26 +16,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "환경팀 휴무관리",
   description: "환경팀 팀원을 위한 모바일 중심 휴무 관리 시스템",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "환경팀 휴무",
-  },
-  icons: {
-    apple: "/apple-icon.png",
-  },
-  formatDetection: {
-    telephone: false,
-  },
-};
-
-export const viewport = {
-  themeColor: "#1d4ed8",
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export default function RootLayout({

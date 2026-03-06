@@ -9,11 +9,7 @@ export async function GET(req: NextRequest) {
 
     try {
         const result = await pool.query(
-            `SELECT l.*, u.name as user_name, u.job_role as user_job_role 
-             FROM leaves l 
-             JOIN users u ON l.user_id = u.id 
-             WHERE l.user_id = $1 
-             ORDER BY l.start_date ASC`,
+            'SELECT * FROM leaves WHERE user_id = $1 ORDER BY start_date ASC',
             [user.id]
         );
         return NextResponse.json(result.rows);
