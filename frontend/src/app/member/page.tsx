@@ -136,7 +136,7 @@ export default function MemberPage() {
 
                     <div className="grid grid-cols-7 gap-1 mb-2">
                         {['일', '월', '화', '수', '목', '금', '토'].map((d, i) => (
-                            <div key={d} className={`text-center text-[10px] font-bold ${i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-slate-500'}`}>
+                            <div key={d} className={`text-center text-[10px] font-bold ${i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-slate-800'}`}>
                                 {d}
                             </div>
                         ))}
