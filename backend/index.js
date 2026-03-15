@@ -63,11 +63,14 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Post multiple leaves or single
 app.post('/api/leaves', authenticateToken, async (req, res) => {
-    const { leave_type, leave_subtype, start_date, end_date, memo } = req.body;
+    const { leave_type, leave_subtype, start_date, end_date, memo, target_user_id } = req.body;
     try {
+        // If admin provides target_user_id, use it. Otherwise use the person's own ID.
+        const userId = (req.user.role === 'admin' && target_user_id) ? target_user_id : req.user.id;
+        
         await pool.query(
             'INSERT INTO leaves (user_id, leave_type, leave_subtype, start_date, end_date, memo) VALUES ($1, $2, $3, $4, $5, $6)',
-            [req.user.id, leave_type, leave_subtype, start_date, end_date, memo || null]
+            [userId, leave_type, leave_subtype, start_date, end_date, memo || null]
         );
         res.status(201).json({ message: 'Leave registered' });
     } catch (err) {

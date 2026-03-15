@@ -10,6 +10,12 @@ import { getHolidayName } from '@/lib/koreanHolidays';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
+interface User {
+    id: number;
+    name: string;
+    role: string;
+}
+
 interface Leave {
     id: number;
     user_name: string;
@@ -27,6 +33,8 @@ export default function AdminPage() {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [leaves, setLeaves] = useState<Leave[]>([]);
     const [selectedDay, setSelectedDay] = useState<Date | null>(new Date());
+    const [teamMembers, setTeamMembers] = useState<User[]>([]);
+    const [targetUserId, setTargetUserId] = useState<number | string>('');
 
     useEffect(() => {
         if (!loading && (!user || user.role !== 'admin')) {
@@ -48,6 +56,17 @@ export default function AdminPage() {
     const [startViewMonthNum, setStartViewMonthNum] = useState(new Date().getMonth());
     const [endViewYear, setEndViewYear] = useState(new Date().getFullYear());
     const [endViewMonthNum, setEndViewMonthNum] = useState(new Date().getMonth());
+    const fetchTeamMembers = React.useCallback(async () => {
+        try {
+            const response = await api.get('/users');
+            setTeamMembers(response.data);
+            // Default to current user if not set
+            if (user) setTargetUserId(user.id);
+        } catch (err) {
+            console.error('Failed to fetch team members', err);
+        }
+    }, [user]);
+
     const fetchLeaves = React.useCallback(async () => {
         if (!user || user.role !== 'admin') return;
         try {
@@ -75,6 +94,7 @@ export default function AdminPage() {
                 start_date: startDate,
                 end_date: endDate,
                 memo: leaveType === '대체휴무' ? memo : undefined,
+                target_user_id: targetUserId ? Number(targetUserId) : undefined,
             });
             setShowForm(false);
             setMemo('');
@@ -99,6 +119,7 @@ export default function AdminPage() {
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchLeaves();
+        fetchTeamMembers();
 
         // 10초마다 자동 새로고침 (Polling)
         const interval = setInterval(() => {
@@ -113,7 +134,7 @@ export default function AdminPage() {
             clearInterval(interval);
             window.removeEventListener('focus', handleFocus);
         };
-    }, [fetchLeaves]);
+    }, [fetchLeaves, fetchTeamMembers]);
 
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(monthStart);
@@ -459,6 +480,23 @@ export default function AdminPage() {
                         </div>
 
                         <form onSubmit={handleRegister} className="space-y-6">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1">대상 팀원</label>
+                                <select
+                                    value={targetUserId}
+                                    onChange={(e) => setTargetUserId(e.target.value)}
+                                    className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl px-4 font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                                    required
+                                >
+                                    <option value="" disabled>팀원을 선택하세요</option>
+                                    {teamMembers.map((m) => (
+                                        <option key={m.id} value={m.id}>
+                                            {m.name} ({m.role === 'admin' ? '관리자' : '팀원'})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider ml-1">휴무 구분</label>

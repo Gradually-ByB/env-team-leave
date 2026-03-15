@@ -29,11 +29,14 @@ export async function POST(req: NextRequest) {
     const user = verifyToken(req);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { leave_type, leave_subtype, start_date, end_date } = await req.json();
+    const { leave_type, leave_subtype, start_date, end_date, memo, target_user_id } = await req.json();
     try {
+        // 관리자인 경우 target_user_id가 있으면 해당 유저의 휴무를 등록, 없으면 본인
+        const userId = (user.role === 'admin' && target_user_id) ? target_user_id : user.id;
+
         await pool.query(
-            'INSERT INTO leaves (user_id, leave_type, leave_subtype, start_date, end_date) VALUES ($1, $2, $3, $4, $5)',
-            [user.id, leave_type, leave_subtype, start_date, end_date]
+            'INSERT INTO leaves (user_id, leave_type, leave_subtype, start_date, end_date, memo) VALUES ($1, $2, $3, $4, $5, $6)',
+            [userId, leave_type, leave_subtype, start_date, end_date, memo || null]
         );
         return NextResponse.json({ message: 'Leave registered' }, { status: 201 });
     } catch (err) {
