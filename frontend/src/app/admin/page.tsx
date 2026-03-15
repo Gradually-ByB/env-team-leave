@@ -98,6 +98,7 @@ export default function AdminPage() {
             });
             setShowForm(false);
             setMemo('');
+            if (user) setTargetUserId(user.id);
             fetchLeaves();
         } catch {
             alert('휴무 등록에 실패했습니다.');
