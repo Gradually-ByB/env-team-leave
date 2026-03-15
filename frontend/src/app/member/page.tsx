@@ -55,10 +55,6 @@ export default function MemberPage() {
         }
     }, [currentMonth]);
 
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        fetchData();
-    }, [fetchData]);
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -81,7 +77,6 @@ export default function MemberPage() {
     const handleDelete = async () => {
         if (!leaveToDelete) return;
         try {
-            console.log('Attempting delete for leave id:', leaveToDelete);
             await api.delete(`/leaves/${leaveToDelete}`);
             // Optimistically remove from UI state
             setMyLeaves(prev => prev.filter(l => l.id !== leaveToDelete));
@@ -95,6 +90,24 @@ export default function MemberPage() {
             alert('삭제에 실패했습니다.');
         }
     };
+
+    useEffect(() => {
+        fetchData();
+
+        // 10초마다 자동 새로고침 (Polling)
+        const interval = setInterval(() => {
+            fetchData();
+        }, 10000);
+
+        // 창이 다시 활성화될 때 즉시 새로고침
+        const handleFocus = () => fetchData();
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, [fetchData]);
 
     // Calendar Logic
     const monthStart = startOfMonth(currentMonth);

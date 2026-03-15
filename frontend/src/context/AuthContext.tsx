@@ -19,29 +19,31 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+export const AuthProvider = ({ children, initialUser }: { children: React.ReactNode, initialUser: User | null }) => {
+    const [user, setUser] = useState<User | null>(initialUser);
+    const [loading, setLoading] = useState(!initialUser);
     const router = useRouter();
 
     useEffect(() => {
         const storedUser = Cookies.get('user');
         const token = Cookies.get('token');
         if (storedUser && token) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setUser(JSON.parse(storedUser));
+        } else {
+            setUser(null);
         }
         setLoading(false);
     }, []);
 
     const login = (token: string, user: User) => {
-        Cookies.set('token', token, { expires: 4 / 24 }); // 4 hours
+        Cookies.set('token', token, { expires: 4 / 24 });
         Cookies.set('user', JSON.stringify(user), { expires: 4 / 24 });
         setUser(user);
+        // Instant redirect based on role
         if (user.role === 'admin') {
-            router.push('/admin');
+            router.replace('/admin');
         } else {
-            router.push('/member');
+            router.replace('/member');
         }
     };
 
@@ -49,12 +51,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         Cookies.remove('token');
         Cookies.remove('user');
         setUser(null);
-        router.push('/');
+        router.replace('/');
     };
 
     return (
         <AuthContext.Provider value={{ user, login, logout, loading }}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     );
 };

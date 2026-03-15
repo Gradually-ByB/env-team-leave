@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { cookies } from "next/headers";
 import { AuthProvider } from "@/context/AuthContext";
 
 const geistSans = Geist({
@@ -18,17 +19,29 @@ export const metadata: Metadata = {
   description: "환경팀 팀원을 위한 모바일 중심 휴무 관리 시스템",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const userCookie = cookieStore.get('user')?.value;
+  let initialUser = null;
+  
+  if (userCookie) {
+    try {
+      initialUser = JSON.parse(userCookie);
+    } catch (e) {
+      console.error('Failed to parse user cookie', e);
+    }
+  }
+
   return (
     <html lang="ko" className="h-screen">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
       >
-        <AuthProvider>
+        <AuthProvider initialUser={initialUser}>
           {children}
         </AuthProvider>
       </body>
