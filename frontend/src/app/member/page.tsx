@@ -121,8 +121,8 @@ export default function MemberPage() {
 
             <main className="p-4 space-y-6">
                 {/* Calendar Section */}
-                <section className="bg-white/90 backdrop-blur-md rounded-3xl p-6 shadow-2xl border border-white/20">
-                    <div className="flex items-center justify-between mb-6">
+                <section className="bg-white/90 backdrop-blur-md rounded-3xl p-4 shadow-2xl border border-white/20">
+                    <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                             <CalendarIcon className="w-5 h-5 text-blue-600" />
                             휴무 일정
@@ -184,7 +184,7 @@ export default function MemberPage() {
                             return (
                                 <div
                                     key={dayStr}
-                                    className={`relative h-12 flex flex-col items-center justify-center rounded-xl transition-all ${isToday(day) ? 'ring-1 ring-blue-400' : ''
+                                    className={`relative h-10 flex flex-col items-center justify-center rounded-xl transition-all ${isToday(day) ? 'ring-1 ring-blue-400' : ''
                                         } ${userLeave ? `${getLeaveBgColor(userLeave.leave_type)} shadow-md` : 'hover:bg-slate-100'}`}
                                 >
                                     <span className={`text-sm font-bold ${!userLeave && (day.getDay() === 0 || isKoreanHoliday(dayStr) ? 'text-red-500' : day.getDay() === 6 ? 'text-blue-500' : 'text-slate-700')}`}>
