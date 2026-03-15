@@ -16,6 +16,7 @@ interface Leave {
     start_date: string;
     end_date: string;
     user_name?: string;
+    memo?: string;
 }
 
 export default function MemberPage() {
@@ -32,6 +33,7 @@ export default function MemberPage() {
     const [leaveSubtype, setLeaveSubtype] = useState('종일');
     const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+    const [memo, setMemo] = useState('');
     // Independent view month/year for date pickers
     const [startViewYear, setStartViewYear] = useState(new Date().getFullYear());
     const [startViewMonthNum, setStartViewMonthNum] = useState(new Date().getMonth());
@@ -66,8 +68,10 @@ export default function MemberPage() {
                 leave_subtype: leaveSubtype,
                 start_date: startDate,
                 end_date: endDate,
+                memo: leaveType === '대체휴무' ? memo : undefined,
             });
             setShowForm(false);
+            setMemo('');
             fetchData();
         } catch {
             alert('휴무 등록에 실패했습니다.');
@@ -227,7 +231,10 @@ export default function MemberPage() {
                                             <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${getLeaveColor(leave.leave_type, isToday)}`}>
                                                 {leave.leave_type}
                                             </span>
-                                            <span className="text-sm font-bold text-slate-700">{leave.leave_subtype}</span>
+                                            <span className="text-sm font-bold text-slate-700">
+                                                {leave.leave_subtype}
+                                                {leave.leave_type === '대체휴무' && leave.memo && <span className="text-xs text-slate-500 font-normal ml-1">({leave.memo})</span>}
+                                            </span>
                                         </div>
                                         <p className="text-xs text-slate-500 flex items-center gap-1 font-medium">
                                             <Clock className="w-3 h-3" />
@@ -317,6 +324,9 @@ export default function MemberPage() {
                                                             <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md ${getTeamLeaveColor(leave.leave_type)}`}>
                                                                 {leave.leave_type}
                                                             </span>
+                                                            {leave.leave_type === '대체휴무' && leave.memo && (
+                                                                <span className="text-[10px] text-slate-400 font-medium ml-[-4px]">({leave.memo})</span>
+                                                            )}
                                                         </div>
                                                     )) : (
                                                         <span className="text-xs text-slate-300 italic py-1">휴무 없음</span>
@@ -390,6 +400,19 @@ export default function MemberPage() {
                                     </select>
                                 </div>
                             </div>
+
+                            {leaveType === '대체휴무' && (
+                                <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+                                    <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">메모 (어느 날에 대한 대체휴무인지 등)</label>
+                                    <input
+                                        type="text"
+                                        value={memo}
+                                        onChange={(e) => setMemo(e.target.value)}
+                                        placeholder="예: 3/1 삼일절 근무 대체"
+                                        className="w-full h-12 bg-slate-50 border-none rounded-2xl px-4 font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+                            )}
 
                             {/* Custom Date Picker Integration */}
                             <div className="space-y-6">

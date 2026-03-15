@@ -63,11 +63,11 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Post multiple leaves or single
 app.post('/api/leaves', authenticateToken, async (req, res) => {
-    const { leave_type, leave_subtype, start_date, end_date } = req.body;
+    const { leave_type, leave_subtype, start_date, end_date, memo } = req.body;
     try {
         await pool.query(
-            'INSERT INTO leaves (user_id, leave_type, leave_subtype, start_date, end_date) VALUES ($1, $2, $3, $4, $5)',
-            [req.user.id, leave_type, leave_subtype, start_date, end_date]
+            'INSERT INTO leaves (user_id, leave_type, leave_subtype, start_date, end_date, memo) VALUES ($1, $2, $3, $4, $5, $6)',
+            [req.user.id, leave_type, leave_subtype, start_date, end_date, memo || null]
         );
         res.status(201).json({ message: 'Leave registered' });
     } catch (err) {
@@ -149,10 +149,21 @@ app.get('/api/leaves/week', authenticateToken, async (req, res) => {
 app.delete('/api/leaves/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await pool.query(
-            'DELETE FROM leaves WHERE id = $1 AND user_id = $2 RETURNING *',
-            [id, req.user.id]
-        );
+        let result;
+        
+        if (req.user.role === 'admin') {
+            // 관리자는 기록을 전부 삭제할 수 있음
+            result = await pool.query(
+                'DELETE FROM leaves WHERE id = $1 RETURNING *',
+                [id]
+            );
+        } else {
+            // 일반 사용자는 본인 기록만 삭제 가능
+            result = await pool.query(
+                'DELETE FROM leaves WHERE id = $1 AND user_id = $2 RETURNING *',
+                [id, req.user.id]
+            );
+        }
 
         if (result.rowCount === 0) {
             return res.status(404).json({ error: 'Leave not found or unauthorized' });

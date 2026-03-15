@@ -16,6 +16,7 @@ interface LeavePreview {
   leave_type: string;
   user_name?: string;
   name?: string;
+  memo?: string;
 }
 
 export default function LoginPage() {
@@ -87,6 +88,9 @@ export default function LoginPage() {
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${badgeColors}`}>
                         {l.leave_type}
                       </span>
+                      {l.leave_type === '대체휴무' && l.memo && (
+                        <span className="text-[10px] text-amber-600/70 font-medium ml-[-8px]">({l.memo.length > 6 ? l.memo.substring(0, 6) + '..' : l.memo})</span>
+                      )}
                     </div>
                   );
                 })}
