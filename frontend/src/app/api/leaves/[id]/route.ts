@@ -12,10 +12,20 @@ export async function DELETE(
 
     const { id } = await params;
     try {
-        const result = await pool.query(
-            'DELETE FROM leaves WHERE id = $1 AND user_id = $2 RETURNING *',
-            [id, user.id]
-        );
+        let result;
+        if (user.role === 'admin') {
+            // 관리자는 모든 휴무 삭제 가능
+            result = await pool.query(
+                'DELETE FROM leaves WHERE id = $1 RETURNING *',
+                [id]
+            );
+        } else {
+            // 일반 사용자는 본인 휴무만 삭제 가능
+            result = await pool.query(
+                'DELETE FROM leaves WHERE id = $1 AND user_id = $2 RETURNING *',
+                [id, user.id]
+            );
+        }
 
         if (result.rowCount === 0) {
             return NextResponse.json({ error: 'Leave not found or unauthorized' }, { status: 404 });
