@@ -375,7 +375,7 @@ export default function MemberPage() {
                                                         </div>
                                                     </div>
                                                     {idx < arr.length - 1 && (
-                                                        <div className="border-b border-dashed border-slate-100 my-1" />
+                                                        <div className="border-b border-dashed border-slate-400 my-1" />
                                                     )}
                                                 </div>
                                             );
