@@ -327,46 +327,59 @@ export default function MemberPage() {
 
                             return (
                                 <div className="space-y-4">
-                                    {weekDays.map(day => {
-                                        const dayStr = format(day, 'yyyy-MM-dd');
-                                        const isWeekday = day.getDay() !== 0 && day.getDay() !== 6;
-                                        const dayLeaves = isWeekday ? teamLeaves.filter(leave => {
-                                            const start = format(new Date(leave.start_date), 'yyyy-MM-dd');
-                                            const end = format(new Date(leave.end_date), 'yyyy-MM-dd');
-                                            return dayStr >= start && dayStr <= end;
-                                        }) : [];
+                                    {weekDays
+                                        .filter(day => {
+                                            const dayStr = format(day, 'yyyy-MM-dd');
+                                            const isWeekday = day.getDay() !== 0 && day.getDay() !== 6;
+                                            const dayLeaves = isWeekday ? teamLeaves.filter(leave => {
+                                                const start = format(new Date(leave.start_date), 'yyyy-MM-dd');
+                                                const end = format(new Date(leave.end_date), 'yyyy-MM-dd');
+                                                return dayStr >= start && dayStr <= end;
+                                            }) : [];
+                                            return dayLeaves.length > 0 || isWeekday;
+                                        })
+                                        .map((day, idx, arr) => {
+                                            const dayStr = format(day, 'yyyy-MM-dd');
+                                            const isWeekday = day.getDay() !== 0 && day.getDay() !== 6;
+                                            const dayLeaves = teamLeaves.filter(leave => {
+                                                const start = format(new Date(leave.start_date), 'yyyy-MM-dd');
+                                                const end = format(new Date(leave.end_date), 'yyyy-MM-dd');
+                                                return dayStr >= start && dayStr <= end;
+                                            });
 
-                                        // 주말이고 휴무자가 없으면 숨김
-                                        if (dayLeaves.length === 0 && (day.getDay() === 0 || day.getDay() === 6)) return null;
-
-                                        return (
-                                            <div key={dayStr} className={`flex items-start gap-3 ${isToday(day) ? 'bg-blue-50/50 -mx-2 px-2 py-2 rounded-xl' : ''}`}>
-                                                <div className="flex flex-col items-center min-w-[45px] pt-0.5">
-                                                    <span className={`text-[10px] font-bold ${day.getDay() === 0 ? 'text-red-500' : day.getDay() === 6 ? 'text-blue-500' : 'text-slate-600'}`}>
-                                                        {format(day, 'eee', { locale: ko })}
-                                                    </span>
-                                                    <span className={`text-sm font-black ${isToday(day) ? 'text-blue-600' : 'text-slate-700'}`}>
-                                                        {format(day, 'dd')}
-                                                    </span>
-                                                </div>
-                                                <div className="flex flex-wrap gap-2 pt-1">
-                                                    {dayLeaves.length > 0 ? dayLeaves.map(leave => (
-                                                        <div key={`${dayStr}-${leave.id}`} className="flex items-center gap-1.5">
-                                                            <span className="text-sm font-bold text-slate-800">{leave.user_name}</span>
-                                                            <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md ${getTeamLeaveColor(leave.leave_type)}`}>
-                                                                {leave.leave_type}
+                                            return (
+                                                <div key={dayStr}>
+                                                    <div className={`flex items-start gap-3 py-2 ${isToday(day) ? 'bg-blue-50/50 -mx-2 px-2 rounded-xl' : ''}`}>
+                                                        <div className="flex flex-col items-center min-w-[45px] pt-0.5">
+                                                            <span className={`text-[10px] font-bold ${day.getDay() === 0 ? 'text-red-500' : day.getDay() === 6 ? 'text-blue-500' : 'text-slate-600'}`}>
+                                                                {format(day, 'eee', { locale: ko })}
                                                             </span>
-                                                            {leave.leave_type === '대체휴무' && leave.memo && (
-                                                                <span className="text-[10px] text-slate-400 font-medium ml-[-4px]">({leave.memo})</span>
+                                                            <span className={`text-sm font-black ${isToday(day) ? 'text-blue-600' : 'text-slate-700'}`}>
+                                                                {format(day, 'dd')}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-2 pt-1 flex-1">
+                                                            {dayLeaves.length > 0 ? dayLeaves.map(leave => (
+                                                                <div key={`${dayStr}-${leave.id}`} className="flex items-center gap-1.5 bg-slate-50/50 px-2 py-1 rounded-lg border border-slate-100">
+                                                                    <span className="text-sm font-bold text-slate-800">{leave.user_name}</span>
+                                                                    <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md ${getTeamLeaveColor(leave.leave_type)}`}>
+                                                                        {leave.leave_type}
+                                                                    </span>
+                                                                    {leave.leave_type === '대체휴무' && leave.memo && (
+                                                                        <span className="text-[10px] text-slate-400 font-medium ml-[-4px]">({leave.memo})</span>
+                                                                    )}
+                                                                </div>
+                                                            )) : (
+                                                                <span className="text-xs text-slate-300 italic py-1">휴무 없음</span>
                                                             )}
                                                         </div>
-                                                    )) : (
-                                                        <span className="text-xs text-slate-300 italic py-1">휴무 없음</span>
+                                                    </div>
+                                                    {idx < arr.length - 1 && (
+                                                        <div className="border-b border-dashed border-slate-100 my-1" />
                                                     )}
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })}
                                     {!hasAnyWeekLeaves && (
                                         <div className="w-full text-center py-2 text-slate-400 text-sm italic">이번 주 팀원 휴무가 없습니다.</div>
                                     )}
