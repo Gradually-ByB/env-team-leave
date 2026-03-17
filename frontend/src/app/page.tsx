@@ -43,6 +43,9 @@ export default function LoginPage() {
     fetchData();
   }, []);
 
+  const admins = users.filter(u => u.role === 'admin');
+  const members = users.filter(u => u.role === 'member');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -59,7 +62,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-transparent p-4">
+    <main className="min-h-dvh flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-[380px] bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border border-white/20">
         <div className="px-4 pt-5 pb-4">
           <div className="flex items-center justify-center gap-3 mb-6">
@@ -104,18 +107,18 @@ export default function LoginPage() {
             <div>
               <div className="space-y-2 max-h-[500px] overflow-y-auto p-2 bg-slate-50 rounded-2xl border border-slate-100 scrollbar-hide">
                 {/* 관리자 섹션 */}
-                {users.some(u => u.role === 'admin') && (
-                  <div>
-                    <label className="block text-[10px] font-bold text-blue-700 uppercase tracking-wider mb-1 ml-1">관리자</label>
-                    <div className="grid grid-cols-5 gap-1">
-                      {users.filter(u => u.role === 'admin').map((u) => (
+                {admins.length > 0 && (
+                  <div className="mb-4">
+                    <label className="block text-[10px] font-bold text-blue-700 uppercase tracking-wider mb-2 ml-1">관리자</label>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {admins.map((u) => (
                         <button
                           key={u.id}
                           type="button"
                           onClick={() => setSelectedName(u.name)}
                           className={`h-9 rounded-lg text-sm font-bold transition-all ${selectedName === u.name
                             ? 'bg-blue-700 text-white shadow-md shadow-blue-200 scale-95'
-                            : 'bg-white text-slate-800 hover:bg-white hover:shadow-sm border border-slate-200'
+                            : 'bg-white text-slate-800 hover:bg-slate-50 border border-slate-200'
                             }`}
                         >
                           {u.name}
@@ -126,24 +129,26 @@ export default function LoginPage() {
                 )}
 
                 {/* 팀원 섹션 */}
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 ml-1">팀원</label>
-                  <div className="grid grid-cols-5 gap-1">
-                    {users.filter(u => u.role === 'member').map((u) => (
-                      <button
-                        key={u.id}
-                        type="button"
-                        onClick={() => setSelectedName(u.name)}
-                        className={`h-9 rounded-lg text-sm font-bold transition-all ${selectedName === u.name
-                          ? 'bg-blue-700 text-white shadow-md shadow-blue-200 scale-95'
-                          : 'bg-white text-slate-600 hover:bg-white hover:shadow-sm border border-slate-100'
-                          }`}
-                      >
-                        {u.name}
-                      </button>
-                    ))}
+                {members.length > 0 && (
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">팀원</label>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {members.map((u) => (
+                        <button
+                          key={u.id}
+                          type="button"
+                          onClick={() => setSelectedName(u.name)}
+                          className={`h-9 rounded-lg text-sm font-bold transition-all ${selectedName === u.name
+                            ? 'bg-blue-700 text-white shadow-md shadow-blue-200 scale-95'
+                            : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100'
+                            }`}
+                        >
+                          {u.name}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -178,6 +183,6 @@ export default function LoginPage() {
           <p className="text-xs text-slate-400 font-medium">© 2026 환경팀. All rights reserved.</p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

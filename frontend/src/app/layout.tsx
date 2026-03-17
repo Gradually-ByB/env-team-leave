@@ -58,9 +58,9 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="ko" className="h-screen">
+    <html lang="ko" className="h-full">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased h-full`}
       >
         <AuthProvider initialUser={initialUser}>
           {children}

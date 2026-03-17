@@ -17,7 +17,7 @@ export function middleware(request: NextRequest) {
   let user;
   try {
     user = JSON.parse(userCookie);
-  } catch (e) {
+  } catch {
     // If cookie is invalid, treat as logged out
     return NextResponse.next();
   }

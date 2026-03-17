@@ -23,15 +23,10 @@ export const AuthProvider = ({ children, initialUser }: { children: React.ReactN
     const [user, setUser] = useState<User | null>(initialUser);
     const [loading, setLoading] = useState(!initialUser);
     const router = useRouter();
-
     useEffect(() => {
-        const storedUser = Cookies.get('user');
-        const token = Cookies.get('token');
-        if (storedUser && token) {
-            setUser(JSON.parse(storedUser));
-        } else {
-            setUser(null);
-        }
+        // State is initialized from initialUser prop (passed from Server Component)
+        // This effect ensures hydration completeness
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLoading(false);
     }, []);
 

@@ -92,6 +92,7 @@ export default function MemberPage() {
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchData();
 
         // 10초마다 자동 새로고침 (Polling)
@@ -110,9 +111,35 @@ export default function MemberPage() {
     }, [fetchData]);
 
     // Calendar Logic
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(monthStart);
-    const calendarDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    const { monthStart, calendarDays } = React.useMemo(() => {
+        const start = startOfMonth(currentMonth);
+        const end = endOfMonth(start);
+        return {
+            monthStart: start,
+            calendarDays: eachDayOfInterval({ start, end })
+        };
+    }, [currentMonth]);
+
+    // Optimize: Pre-calculate leaves for each day to avoid repeated filtering in render
+    const leavesByDateMap = React.useMemo(() => {
+        const map = new Map<string, { userLeave: Leave | undefined, teamLeaves: Leave[] }>();
+        
+        calendarDays.forEach(day => {
+            const dayStr = format(day, 'yyyy-MM-dd');
+            // We still filter here but only once per mount/month-change, not every render of every day
+            const dayLeaves = monthLeaves.filter(l => {
+                const startStr = format(new Date(l.start_date), 'yyyy-MM-dd');
+                const endStr = format(new Date(l.end_date), 'yyyy-MM-dd');
+                return dayStr >= startStr && dayStr <= endStr;
+            });
+
+            map.set(dayStr, {
+                userLeave: dayLeaves.find(l => l.user_id === user?.id),
+                teamLeaves: dayLeaves.filter(l => l.user_id !== user?.id)
+            });
+        });
+        return map;
+    }, [calendarDays, monthLeaves, user?.id]);
 
     return (
         <div className="min-h-screen bg-transparent pb-24">
@@ -162,19 +189,9 @@ export default function MemberPage() {
                         ))}
                         {calendarDays.map((day) => {
                             const dayStr = format(day, 'yyyy-MM-dd');
-                            const userLeave = monthLeaves.find(l => {
-                                const startStr = format(new Date(l.start_date), 'yyyy-MM-dd');
-                                const endStr = format(new Date(l.end_date), 'yyyy-MM-dd');
-                                const isWeekday = day.getDay() !== 0 && day.getDay() !== 6;
-                                return isWeekday && dayStr >= startStr && dayStr <= endStr && l.user_id === user?.id;
-                            });
-
-                            const teamMembersOnLeave = monthLeaves.filter(l => {
-                                const startStr = format(new Date(l.start_date), 'yyyy-MM-dd');
-                                const endStr = format(new Date(l.end_date), 'yyyy-MM-dd');
-                                const isWeekday = day.getDay() !== 0 && day.getDay() !== 6;
-                                return isWeekday && dayStr >= startStr && dayStr <= endStr && l.user_id !== user?.id;
-                            });
+                            const dayData = leavesByDateMap.get(dayStr);
+                            const userLeave = dayData?.userLeave;
+                            const teamMembersOnLeave = dayData?.teamLeaves || [];
 
                             const getLeaveBgColor = (type?: string) => {
                                 switch (type) {

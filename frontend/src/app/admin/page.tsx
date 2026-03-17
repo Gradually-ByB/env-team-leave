@@ -67,6 +67,7 @@ export default function AdminPage() {
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 1024);
         checkMobile();
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
