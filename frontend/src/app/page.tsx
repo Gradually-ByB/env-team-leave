@@ -27,6 +27,8 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const { login } = useAuth();
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -38,6 +40,8 @@ export default function LoginPage() {
         setTodayLeaves(leavesRes.data);
       } catch (err) {
         console.error('Failed to fetch initial data', err);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchData();
@@ -77,7 +81,12 @@ export default function LoginPage() {
               <CalendarIcon className="w-4 h-4 text-blue-600" />
               <h2 className="text-sm font-bold text-blue-800">오늘의 휴무자 {todayLeaves.length > 0 ? `(${todayLeaves.length})` : ''}</h2>
             </div>
-            {todayLeaves.length > 0 ? (
+            {isLoading ? (
+              <div className="flex gap-2 px-1 animate-pulse">
+                <div className="h-6 w-16 bg-blue-200/50 rounded-md"></div>
+                <div className="h-6 w-20 bg-blue-200/50 rounded-md"></div>
+              </div>
+            ) : todayLeaves.length > 0 ? (
               <div className="flex flex-wrap gap-x-4 gap-y-2 px-1">
                 {todayLeaves.map((l, i) => {
                   let badgeColors = 'text-slate-600 bg-slate-50';
@@ -106,48 +115,68 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <div className="space-y-2 max-h-[500px] overflow-y-auto p-2 bg-slate-50 rounded-2xl border border-slate-100 scrollbar-hide">
-                {/* 관리자 섹션 */}
-                {admins.length > 0 && (
-                  <div className="mb-4">
-                    <label className="block text-[10px] font-bold text-blue-700 uppercase tracking-wider mb-2 ml-1">관리자</label>
+                {/* 로딩 스켈레톤 */}
+                {isLoading ? (
+                  <div className="animate-pulse space-y-4 p-2">
+                    <div className="h-4 bg-slate-200 rounded w-16 mb-2"></div>
                     <div className="grid grid-cols-5 gap-1.5">
-                      {admins.map((u) => (
-                        <button
-                          key={u.id}
-                          type="button"
-                          onClick={() => setSelectedName(u.name)}
-                          className={`h-9 rounded-lg text-sm font-bold transition-all ${selectedName === u.name
-                            ? 'bg-blue-700 text-white shadow-md shadow-blue-200 scale-95'
-                            : 'bg-white text-slate-800 hover:bg-slate-50 border border-slate-200'
-                            }`}
-                        >
-                          {u.name}
-                        </button>
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className="h-9 bg-slate-200 rounded-lg"></div>
+                      ))}
+                    </div>
+                    <div className="h-4 bg-slate-200 rounded w-16 mb-2 mt-4"></div>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                        <div key={i} className="h-9 bg-slate-200 rounded-lg"></div>
                       ))}
                     </div>
                   </div>
-                )}
+                ) : (
+                  <>
+                    {/* 관리자 섹션 */}
+                    {admins.length > 0 && (
+                      <div className="mb-4">
+                        <label className="block text-[10px] font-bold text-blue-700 uppercase tracking-wider mb-2 ml-1">관리자</label>
+                        <div className="grid grid-cols-5 gap-1.5">
+                          {admins.map((u) => (
+                            <button
+                              key={u.id}
+                              type="button"
+                              onClick={() => setSelectedName(u.name)}
+                              className={`h-9 rounded-lg text-sm font-bold transition-all ${selectedName === u.name
+                                ? 'bg-blue-700 text-white shadow-md shadow-blue-200 scale-95'
+                                : 'bg-white text-slate-800 hover:bg-slate-50 border border-slate-200'
+                                }`}
+                            >
+                              {u.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                {/* 팀원 섹션 */}
-                {members.length > 0 && (
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">팀원</label>
-                    <div className="grid grid-cols-5 gap-1.5">
-                      {members.map((u) => (
-                        <button
-                          key={u.id}
-                          type="button"
-                          onClick={() => setSelectedName(u.name)}
-                          className={`h-9 rounded-lg text-sm font-bold transition-all ${selectedName === u.name
-                            ? 'bg-blue-700 text-white shadow-md shadow-blue-200 scale-95'
-                            : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100'
-                            }`}
-                        >
-                          {u.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                    {/* 팀원 섹션 */}
+                    {members.length > 0 && (
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">팀원</label>
+                        <div className="grid grid-cols-5 gap-1.5">
+                          {members.map((u) => (
+                            <button
+                              key={u.id}
+                              type="button"
+                              onClick={() => setSelectedName(u.name)}
+                              className={`h-9 rounded-lg text-sm font-bold transition-all ${selectedName === u.name
+                                ? 'bg-blue-700 text-white shadow-md shadow-blue-200 scale-95'
+                                : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100'
+                                }`}
+                            >
+                              {u.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
