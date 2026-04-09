@@ -30,7 +30,7 @@ const authenticateToken = (req, res, next) => {
 
 app.get('/api/users', async (req, res) => {
     try {
-        const result = await pool.query('SELECT id, name, role FROM users ORDER BY id ASC');
+        const result = await pool.query('SELECT id, name, role, job_role FROM users ORDER BY id ASC');
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -59,6 +59,63 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+// Admin-only User Management
+app.post('/api/users', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { name, role, job_role, password } = req.body;
+    try {
+        const password_hash = await bcrypt.hash(password || '1234', 10);
+        const result = await pool.query(
+            'INSERT INTO users (name, role, job_role, password_hash) VALUES ($1, $2, $3, $4) RETURNING id, name, role, job_role',
+            [name, role || 'member', job_role || '팀원', password_hash]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/users/:id', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { id } = req.params;
+    const { name, role, job_role, password } = req.body;
+    try {
+        let query = 'UPDATE users SET name = $1, role = $2, job_role = $3';
+        let params = [name, role, job_role];
+
+        if (password) {
+            const password_hash = await bcrypt.hash(password, 10);
+            query += ', password_hash = $4 WHERE id = $5 RETURNING id, name, role, job_role';
+            params.push(password_hash, id);
+        } else {
+            query += ' WHERE id = $4 RETURNING id, name, role, job_role';
+            params.push(id);
+        }
+
+        const result = await pool.query(query, params);
+        if (result.rowCount === 0) return res.status(404).json({ error: 'User not found' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/users/:id', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { id } = req.params;
+    try {
+        // Don't allow deleting yourself
+        if (Number(id) === req.user.id) {
+            return res.status(400).json({ error: 'Cannot delete yourself' });
+        }
+        const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);
+        if (result.rowCount === 0) return res.status(404).json({ error: 'User not found' });
+        res.json({ message: 'User deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // --- LEAVES API ---
 
 // Post multiple leaves or single
@@ -67,7 +124,7 @@ app.post('/api/leaves', authenticateToken, async (req, res) => {
     try {
         // If admin provides target_user_id, use it. Otherwise use the person's own ID.
         const userId = (req.user.role === 'admin' && target_user_id) ? target_user_id : req.user.id;
-        
+
         await pool.query(
             'INSERT INTO leaves (user_id, leave_type, leave_subtype, start_date, end_date, memo) VALUES ($1, $2, $3, $4, $5, $6)',
             [userId, leave_type, leave_subtype, start_date, end_date, memo || null]
@@ -153,7 +210,7 @@ app.delete('/api/leaves/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
         let result;
-        
+
         if (req.user.role === 'admin') {
             // 관리자는 기록을 전부 삭제할 수 있음
             result = await pool.query(

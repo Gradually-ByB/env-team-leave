@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isSameDay, isToday, addDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { LogOut, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Info, PlusCircle, Trash2, ClipboardList, Users, Clock } from 'lucide-react';
+import { LogOut, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Info, PlusCircle, Trash2, ClipboardList, Users, Clock, UserPlus, Edit2, Save, X, UserCog } from 'lucide-react';
 import { getHolidayName } from '@/lib/koreanHolidays';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -14,6 +14,7 @@ interface User {
     id: number;
     name: string;
     role: string;
+    job_role: string;
 }
 
 interface Leave {
@@ -38,6 +39,16 @@ export default function AdminPage() {
 
     const [isMobile, setIsMobile] = useState(false);
     const [mounted, setMounted] = useState(false);
+
+    // User Management State
+    const [showUserModal, setShowUserModal] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [userForm, setUserForm] = useState({
+        name: '',
+        role: 'member',
+        job_role: '',
+        password: ''
+    });
 
     // Optimized: Pre-calculate leaves for each day to avoid repeated filtering
     const leavesByDate = React.useMemo(() => {
@@ -121,6 +132,46 @@ export default function AdminPage() {
             console.error('Failed to fetch leaves', err);
         }
     }, [user, currentMonth]);
+
+    const handleUserSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            if (editingUser) {
+                await api.put(`/users/${editingUser.id}`, userForm);
+            } else {
+                await api.post('/users', userForm);
+            }
+            setShowUserModal(false);
+            setEditingUser(null);
+            setUserForm({ name: '', role: 'member', job_role: '', password: '' });
+            fetchTeamMembers();
+            fetchLeaves();
+        } catch (err) {
+            console.error('User action failed', err);
+            alert('작업에 실패했습니다.');
+        }
+    };
+
+    const handleEditUser = (u: User) => {
+        setEditingUser(u);
+        setUserForm({
+            name: u.name,
+            role: u.role,
+            job_role: u.job_role,
+            password: '' // Don't show password
+        });
+    };
+
+    const handleDeleteUser = async (id: number) => {
+        if (!confirm('정말 이 팀원을 삭제하시겠습니까? 관련 휴무 데이터가 로직에 따라 영향을 받을 수 있습니다.')) return;
+        try {
+            await api.delete(`/users/${id}`);
+            fetchTeamMembers();
+        } catch (err) {
+            console.error('Delete user failed', err);
+            alert('삭제에 실패했습니다.');
+        }
+    };
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -218,6 +269,14 @@ export default function AdminPage() {
                         </div>
                     )}
                     <button
+                        onClick={() => setShowUserModal(true)}
+                        className={`flex items-center gap-2 ${isMobile ? 'p-2.5' : 'py-2 px-4'} bg-blue-50 text-blue-600 rounded-xl border border-blue-100 font-bold hover:bg-blue-100 transition-all active:scale-95`}
+                        title="팀원 관리"
+                    >
+                        <UserCog className={isMobile ? "w-5 h-5" : "w-4 h-4"} />
+                        {!isMobile && "팀원 관리"}
+                    </button>
+                    <button
                         onClick={logout}
                         className={`${isMobile ? 'p-2' : 'p-3'} text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all active:scale-95 border border-transparent hover:border-red-100`}
                         title="로그아웃"
@@ -275,11 +334,10 @@ export default function AdminPage() {
                                         {dayLeaves.length > 0 && (
                                             <div className="flex gap-0.5 mt-1">
                                                 {dayLeaves.slice(0, 3).map((l, i) => (
-                                                    <div key={i} className={`w-1 h-1 rounded-full ${
-                                                        l.leave_type === '연차' ? 'bg-blue-400' : 
-                                                        l.leave_type === '반차' ? 'bg-emerald-400' : 
-                                                        l.leave_type === '대체휴무' ? 'bg-amber-400' : 'bg-slate-300'
-                                                    }`} />
+                                                    <div key={i} className={`w-1 h-1 rounded-full ${l.leave_type === '연차' ? 'bg-blue-400' :
+                                                        l.leave_type === '반차' ? 'bg-emerald-400' :
+                                                            l.leave_type === '대체휴무' ? 'bg-amber-400' : 'bg-slate-300'
+                                                        }`} />
                                                 ))}
                                             </div>
                                         )}
@@ -320,8 +378,8 @@ export default function AdminPage() {
                                                 <span className={`px-2 py-0.5 text-[9px] font-black rounded-md ${getLeaveColorClass(l.leave_type)}`}>
                                                     {l.leave_type}
                                                 </span>
-                                                <button 
-                                                    onClick={() => setLeaveToDelete(l.id)} 
+                                                <button
+                                                    onClick={() => setLeaveToDelete(l.id)}
                                                     className="p-1.5 text-slate-300 hover:text-red-500 transition-colors"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
@@ -464,7 +522,7 @@ export default function AdminPage() {
                                 const baseDate = selectedDay || new Date();
                                 const isBaseToday = isToday(baseDate);
                                 const isBaseWeekend = baseDate.getDay() === 0 || baseDate.getDay() === 6;
-                                
+
                                 const nextDay = baseDate.getDay() === 5 ? addDays(baseDate, 3) : addDays(baseDate, 1);
                                 const isNextWeekend = nextDay.getDay() === 0 || nextDay.getDay() === 6;
 
@@ -883,6 +941,149 @@ export default function AdminPage() {
                             >
                                 삭제하기
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* User Management Modal */}
+            {showUserModal && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+                    <div className="w-full max-w-4xl bg-white rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <div className="flex items-center gap-3">
+                                <Users className="w-6 h-6 text-blue-600" />
+                                <h2 className="text-xl font-black text-slate-800 tracking-tight">팀원 관리</h2>
+                            </div>
+                            <button
+                                onClick={() => { setShowUserModal(false); setEditingUser(null); setUserForm({ name: '', role: 'member', job_role: '', password: '' }); }}
+                                className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6 text-slate-400" />
+                            </button>
+                        </div>
+
+                        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+                            {/* User List */}
+                            <div className="flex-[1.5] border-r border-slate-100 overflow-y-auto p-6 space-y-3">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">팀원 목록 ({teamMembers.length})</h3>
+                                    {!editingUser && (
+                                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md border border-blue-100 italic">신규 추가 완료 시 자동 반영</span>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-3">
+                                    {teamMembers.map(u => (
+                                        <div key={u.id} className={`p-4 rounded-2xl border transition-all flex items-center justify-between group ${editingUser?.id === u.id ? 'bg-blue-50 border-blue-200 shadow-sm' : 'bg-white border-slate-100 hover:border-blue-100 shadow-sm'}`}>
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${u.role === 'admin' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                                    {u.name[0]}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-black text-slate-800 truncate">{u.name}</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 truncate">{u.job_role} • {u.role === 'admin' ? '관리자' : '팀원'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                                <button
+                                                    onClick={() => handleEditUser(u)}
+                                                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-100/50 rounded-lg transition-all"
+                                                    title="수정"
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteUser(u.id)}
+                                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                    disabled={user?.id === u.id}
+                                                    title={user?.id === u.id ? "본인은 삭제할 수 없습니다" : "삭제"}
+                                                >
+                                                    <Trash2 className="w-4 h-4 opacity-50 group-disabled:opacity-20" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Edit/Add Form */}
+                            <div className="flex-1 bg-slate-50/30 p-8 overflow-y-auto border-t lg:border-t-0 border-slate-100">
+                                <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
+                                    {editingUser ? <div className="p-2 bg-blue-100 rounded-lg"><Edit2 className="w-4 h-4 text-blue-600" /></div> : <div className="p-2 bg-blue-100 rounded-lg"><UserPlus className="w-4 h-4 text-blue-600" /></div>}
+                                    {editingUser ? '팀원 정보 수정' : '새 팀원 추가'}
+                                </h3>
+                                <form onSubmit={handleUserSubmit} className="space-y-5">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">이름</label>
+                                        <input
+                                            type="text"
+                                            value={userForm.name}
+                                            onChange={e => setUserForm({ ...userForm, name: e.target.value })}
+                                            className="w-full h-12 px-4 bg-white border border-slate-500 rounded-xl font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all shadow-sm"
+                                            placeholder="홍길동"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">직무 (예: 고등, 중등, PAC)</label>
+                                        <input
+                                            type="text"
+                                            value={userForm.job_role}
+                                            onChange={e => setUserForm({ ...userForm, job_role: e.target.value })}
+                                            className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all shadow-sm"
+                                            placeholder="근무지"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">권한</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {['member', 'admin'].map((r) => (
+                                                <button
+                                                    key={r}
+                                                    type="button"
+                                                    onClick={() => setUserForm({ ...userForm, role: r })}
+                                                    className={`h-11 rounded-xl font-bold text-xs transition-all ${userForm.role === r ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'bg-white text-slate-500 border border-slate-200 hover:border-blue-200'}`}
+                                                >
+                                                    {r === 'admin' ? '관리자' : '일반 팀원'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">
+                                            {editingUser ? '비밀번호 변경 (미입력시 유지)' : '비밀번호 (4자리)'}
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={userForm.password}
+                                            onChange={e => setUserForm({ ...userForm, password: e.target.value })}
+                                            className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl font-bold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all shadow-sm tracking-[0.3em]"
+                                            placeholder="••••"
+                                            required={!editingUser}
+                                        />
+                                    </div>
+
+                                    <div className="pt-6 flex flex-col gap-3">
+                                        <button
+                                            type="submit"
+                                            className="w-full h-14 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                                        >
+                                            <Save className="w-5 h-5" />
+                                            {editingUser ? '수정 내용 저장하기' : '새로운 팀원으로 등록'}
+                                        </button>
+                                        {editingUser && (
+                                            <button
+                                                type="button"
+                                                onClick={() => { setEditingUser(null); setUserForm({ name: '', role: 'member', job_role: '', password: '' }); }}
+                                                className="w-full h-12 rounded-2xl bg-white text-slate-500 font-bold border border-slate-200 hover:bg-slate-50 transition-all"
+                                            >
+                                                수정 취소
+                                            </button>
+                                        )}
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
